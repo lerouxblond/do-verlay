@@ -19,12 +19,11 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom"],
-    "baseUrl": ".",
+    "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom/vitest"],
     "paths": {
-      "@shared/*": ["src/shared/*"],
-      "@overlay/*": ["src/apps/overlay/*"],
-      "@panel/*": ["src/apps/panel/*"]
+      "@shared/*": ["./src/shared/*"],
+      "@overlay/*": ["./src/apps/overlay/*"],
+      "@panel/*": ["./src/apps/panel/*"]
     }
   },
   "include": ["src", "vite.config.ts", "vitest.setup.ts"]

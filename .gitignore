@@ -1,0 +1,54 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editors / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+*.local
+
+# --- Logs ---
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Go (server) ---
+# Compiled binaries
+server/bin/
+server/cmd/api/api
+server/cmd/api/api.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+# Test binary / coverage
+*.test
+*.out
+coverage.out
+# Go workspace
+go.work
+go.work.sum
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/coverage/
+*.tsbuildinfo
+
+# --- Docker ---
+# Local override files (keep docker-compose.yml tracked)
+docker-compose.override.yml

@@ -1,0 +1,18 @@
+# Environnement de dev — PostgreSQL pour le backend (différé).
+# `docker compose up -d` démarre la base ; les migrations vivent dans server/migrations.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: doverlay
+      POSTGRES_PASSWORD: doverlay
+      POSTGRES_DB: doverlay
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Applique le schéma initial au premier démarrage.
+      - ./server/migrations/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
+
+volumes:
+  db-data:

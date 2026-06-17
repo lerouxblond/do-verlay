@@ -1,8 +1,13 @@
 /**
  * ConfigProvider — source de vérité de la config côté front.
- * Le panel édite ; l'overlay applique. Synchro temps réel entre onglets via
- * BroadcastChannel + persistance localStorage (remplace, en attendant le
- * backend, le canal WebSocket de l'architecture cible).
+ * Le panel édite (`publish`) ; l'overlay applique (abonné seul).
+ *
+ * Trois canaux de synchro complémentaires :
+ *  - localStorage : persistance + reprise au redémarrage.
+ *  - BroadcastChannel : synchro instantanée entre onglets du MÊME navigateur.
+ *  - WebSocket (/ws du serveur Go) : synchro entre PROCESS distincts — indispensable pour
+ *    que l'overlay tourné dans OBS (navigateur intégré, localStorage isolé) reçoive la config.
+ *    Sans serveur (front servi par Vite), la connexion échoue silencieusement → mode local.
  */
 import {
   createContext,
@@ -16,7 +21,7 @@ import {
 } from 'react';
 import { BROADCAST_CHANNEL } from '../constants';
 import type { ModuleType, Profile } from '../types';
-import { cloneProfile } from './profile';
+import { cloneProfile, createEmptyProfile } from './profile';
 import { fromExport, loadState, saveState, toExport, type PersistedState } from './store';
 
 /** Intentions d'affichage éphémères (non persistées) panel → overlay. */
@@ -24,7 +29,7 @@ export type DisplayIntent =
   | { kind: 'trigger'; module: ModuleType }
   | { kind: 'pin'; module: ModuleType };
 
-type BroadcastMessage =
+type SyncMessage =
   | { type: 'state'; state: PersistedState }
   | { type: 'intent'; intent: DisplayIntent };
 
@@ -36,6 +41,10 @@ interface ConfigValue {
   updateProfile: (recipe: (p: Profile) => void) => void;
   switchProfile: (id: string) => void;
   duplicateProfile: () => void;
+  /** Crée un profil vierge et le rend actif. */
+  newProfile: () => void;
+  /** Supprime un profil (jamais le dernier). */
+  deleteProfile: (id: string) => void;
   exportProfile: () => void;
   importProfile: (file: File) => Promise<void>;
   /** Émet une intention d'affichage (déclenchement / épinglage). */
@@ -46,42 +55,111 @@ interface ConfigValue {
 
 const ConfigCtx = createContext<ConfigValue | null>(null);
 
-export function ConfigProvider({ children }: { children: ReactNode }) {
+const wsUrl = (): string | null => {
+  if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return null;
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}/ws`;
+};
+
+export interface ConfigProviderProps {
+  children: ReactNode;
+  /**
+   * `true` (panel) : publie ses changements sur les canaux de synchro.
+   * `false` (overlay) : abonné seul — n'émet jamais, applique ce qu'il reçoit.
+   */
+  publish?: boolean;
+}
+
+export function ConfigProvider({ children, publish = true }: ConfigProviderProps) {
   const [state, setState] = useState<PersistedState>(() => loadState());
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const intentSubs = useRef(new Set<(i: DisplayIntent) => void>());
-  /** Vrai quand on applique un message distant → ne pas re-diffuser. */
-  const applyingRemote = useRef(false);
+  /** Dernier état synchronisé (reçu OU émis), sérialisé — évite les ré-émissions / boucles. */
+  const lastSync = useRef('');
+  /** Dernier état connu, pour le pousser dès l'ouverture du WebSocket. */
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
-  // Canal de diffusion + écoute des messages distants.
+  /** Applique un état distant sans le ré-émettre. */
+  const applyRemoteState = useCallback((next: PersistedState) => {
+    lastSync.current = JSON.stringify(next);
+    setState(next);
+  }, []);
+
+  const handleMessage = useCallback(
+    (msg: SyncMessage) => {
+      if (msg.type === 'state') applyRemoteState(msg.state);
+      else if (msg.type === 'intent') intentSubs.current.forEach((cb) => cb(msg.intent));
+    },
+    [applyRemoteState],
+  );
+
+  // Canal inter-onglets (même navigateur).
   useEffect(() => {
     if (typeof BroadcastChannel === 'undefined') return;
     const ch = new BroadcastChannel(BROADCAST_CHANNEL);
     channelRef.current = ch;
-    ch.onmessage = (ev: MessageEvent<BroadcastMessage>) => {
-      const msg = ev.data;
-      if (msg.type === 'state') {
-        applyingRemote.current = true;
-        setState(msg.state);
-      } else if (msg.type === 'intent') {
-        intentSubs.current.forEach((cb) => cb(msg.intent));
-      }
-    };
+    ch.onmessage = (ev: MessageEvent<SyncMessage>) => handleMessage(ev.data);
     return () => {
       ch.close();
       channelRef.current = null;
     };
+  }, [handleMessage]);
+
+  // Canal inter-process (serveur Go) — reconnexion automatique.
+  useEffect(() => {
+    const url = wsUrl();
+    if (!url) return;
+    let ws: WebSocket | null = null;
+    let retry: number | undefined;
+    let closed = false;
+
+    const connect = () => {
+      ws = new WebSocket(url);
+      wsRef.current = ws;
+      ws.onmessage = (ev: MessageEvent<string>) => {
+        try {
+          handleMessage(JSON.parse(ev.data) as SyncMessage);
+        } catch {
+          /* message non-JSON ignoré */
+        }
+      };
+      ws.onopen = () => {
+        // Le panel pousse son état courant pour réhydrater le serveur (et les overlays).
+        if (publish && ws) ws.send(JSON.stringify({ type: 'state', state: stateRef.current }));
+      };
+      ws.onclose = () => {
+        wsRef.current = null;
+        if (!closed) retry = window.setTimeout(connect, 2500);
+      };
+      ws.onerror = () => ws?.close();
+    };
+    connect();
+
+    return () => {
+      closed = true;
+      if (retry) window.clearTimeout(retry);
+      ws?.close();
+      wsRef.current = null;
+    };
+  }, [handleMessage, publish]);
+
+  const broadcast = useCallback((msg: SyncMessage) => {
+    channelRef.current?.postMessage(msg);
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
   }, []);
 
-  // Persiste + diffuse à chaque changement de config (sauf si appliqué à distance).
+  // Persiste toujours ; ne diffuse que si `publish` et que l'état a réellement changé.
   useEffect(() => {
     saveState(state);
-    if (applyingRemote.current) {
-      applyingRemote.current = false;
-      return;
-    }
-    channelRef.current?.postMessage({ type: 'state', state } satisfies BroadcastMessage);
-  }, [state]);
+    if (!publish) return;
+    const json = JSON.stringify(state);
+    if (json === lastSync.current) return; // déjà synchronisé (reçu ou émis)
+    lastSync.current = json;
+    broadcast({ type: 'state', state });
+  }, [state, publish, broadcast]);
 
   const profile = useMemo(
     () => state.profiles.find((p) => p.id === state.activeId) ?? state.profiles[0],
@@ -115,6 +193,22 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const newProfile = useCallback(() => {
+    setState((prev) => {
+      const fresh = createEmptyProfile(`profil-${Date.now().toString(36)}`);
+      return { profiles: [...prev.profiles, fresh], activeId: fresh.id };
+    });
+  }, []);
+
+  const deleteProfile = useCallback((id: string) => {
+    setState((prev) => {
+      if (prev.profiles.length <= 1) return prev; // on garde toujours un profil
+      const profiles = prev.profiles.filter((p) => p.id !== id);
+      const activeId = prev.activeId === id ? profiles[0].id : prev.activeId;
+      return { profiles, activeId };
+    });
+  }, []);
+
   const exportProfile = useCallback(() => {
     const data = toExport(profile);
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -138,9 +232,12 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const emitIntent = useCallback((intent: DisplayIntent) => {
-    channelRef.current?.postMessage({ type: 'intent', intent } satisfies BroadcastMessage);
-  }, []);
+  const emitIntent = useCallback(
+    (intent: DisplayIntent) => {
+      if (publish) broadcast({ type: 'intent', intent });
+    },
+    [publish, broadcast],
+  );
 
   const subscribeIntent = useCallback((cb: (i: DisplayIntent) => void) => {
     intentSubs.current.add(cb);
@@ -155,6 +252,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       updateProfile,
       switchProfile,
       duplicateProfile,
+      newProfile,
+      deleteProfile,
       exportProfile,
       importProfile,
       emitIntent,
@@ -167,6 +266,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       updateProfile,
       switchProfile,
       duplicateProfile,
+      newProfile,
+      deleteProfile,
       exportProfile,
       importProfile,
       emitIntent,

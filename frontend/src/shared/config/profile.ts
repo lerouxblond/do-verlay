@@ -12,20 +12,27 @@ export const cloneProfile = (p: Profile): Profile =>
     ? structuredClone(p)
     : (JSON.parse(JSON.stringify(p)) as Profile);
 
-const defaultModule = (type: ModuleType, zone: ModuleSettings['zone_ancrage']): ModuleSettings => ({
+const defaultModule = (
+  type: ModuleType,
+  zone: ModuleSettings['zone_ancrage'],
+  actif: boolean,
+): ModuleSettings => ({
   type,
   zone_ancrage: zone,
-  actif: true,
+  actif,
+  epingle: false,
   duree_affichage: TIMING.display,
   cooldown: TIMING.cooldown,
   commande: MODULES[type].command,
 });
 
+// Seul le Dofusdex est implémenté → actif par défaut ; les autres s'activeront quand
+// leur module sera construit (évite des créneaux de rotation vides à l'écran).
 const defaultModules = (): Profile['modules'] => ({
-  dofusdex: defaultModule('dofusdex', 'HD'),
-  etendard: defaultModule('etendard', 'BG'),
-  fiche: defaultModule('fiche', 'BD'),
-  generique: defaultModule('generique', 'BAS'),
+  dofusdex: defaultModule('dofusdex', 'HD', true),
+  etendard: defaultModule('etendard', 'BG', false),
+  fiche: defaultModule('fiche', 'BD', false),
+  generique: defaultModule('generique', 'BAS', false),
 });
 
 const emptyDofusStates = (): Record<DofusId, DofusState> =>
@@ -38,6 +45,9 @@ export const createEmptyProfile = (id = 'profil-1'): Profile => ({
   limite_modules: MODULE_LIMIT.default,
   rotation: false,
   modules: defaultModules(),
+  dofusdex_objectif: '',
+  dofusdex_format: 'vertical',
+  overlay_hud: false,
   ordre: DOFUS_LIST.map((d) => d.id),
   dofus: emptyDofusStates(),
   guild: { nom: '', emblem: { back: 1, up: 1 }, recrutement: 'closed', niveau_guilde: 1, tags: [] },

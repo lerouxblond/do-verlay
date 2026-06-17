@@ -17,6 +17,21 @@ export const DOFUS_LIST: Dofus[] = [
   { id: 'veilleur', nom: 'Veilleur', asset: 'dof-veilleur' },
   { id: 'ebene', nom: 'Ébène', asset: 'dof-ébène' },
   { id: 'nebuleux', nom: 'Nébuleux', asset: 'dof-nebuleux' },
+  { id: 'argentee', nom: 'Argentée', asset: 'dof-argentée' },
+  { id: 'argentee-scintillant', nom: 'Argentée Scintillant', asset: 'dof-argentée-scintillant' },
+  { id: 'cauchemar', nom: 'Cauchemar', asset: 'dof-cauchemar' },
+  { id: 'ddg', nom: 'DDG', asset: 'dof-ddg' },
+  { id: 'dofawa', nom: 'Dofawa', asset: 'dof-dofawa' },
+  { id: 'dofooz', nom: 'Dofooz', asset: 'dof-dofooz' },
+  { id: 'dokoko', nom: 'Dokoko', asset: 'dof-dokoko' },
+  { id: 'domakuro', nom: 'Domakuro', asset: 'dof-domakuro' },
+  { id: 'domdepin', nom: 'Dom de Pin', asset: 'dof-domdepin' },
+  { id: 'dorigami', nom: 'Dorigami', asset: 'dof-dorigami' },
+  { id: 'dotruche', nom: 'Dotruche', asset: 'dof-dotruche' },
+  { id: 'forgelave', nom: 'Forgelave', asset: 'dof-forgelave' },
+  { id: 'khaliptus', nom: 'Khaliptus', asset: 'dof-khaliptus' },
+  { id: 'sylvestre', nom: 'Sylvestre', asset: 'dof-sylvestre' },
+  { id: 'tachete', nom: 'Tacheté', asset: 'dof-tacheté' },
 ];
 
 export const DOFUS_BY_ID: Record<DofusId, Dofus> = Object.fromEntries(

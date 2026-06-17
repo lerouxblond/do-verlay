@@ -19,7 +19,7 @@ export interface EngineRuntime {
   rotAt: number;
 }
 
-export type TriggerResult = 'shown' | 'queued' | 'already' | 'cooldown';
+export type TriggerResult = 'shown' | 'queued' | 'already' | 'cooldown' | 'inactive';
 
 export interface OverlayEngine {
   shown: Partial<Record<ModuleType, number>>;
@@ -47,11 +47,23 @@ const emptyCooldown = (): Record<ModuleType, number> => ({
 export interface EngineOptions {
   /** retour pour le simulateur de chat (feedback texte coloré). */
   onMessage?: (text: string, color: string) => void;
+  /**
+   * Sous-ensemble de modules réellement gérés (= implémentés côté rendu). La rotation
+   * et les commandes ignorent les modules hors de cet ensemble, pour ne jamais afficher
+   * de créneau vide. Défaut : tous les modules.
+   */
+  available?: ModuleType[];
 }
 
 export function useOverlayEngine(profile: Profile, options: EngineOptions = {}): OverlayEngine {
-  const { onMessage } = options;
+  const { onMessage, available = MODULE_ORDER } = options;
   const limit = profile.limite_modules;
+
+  /** Module pilotable : implémenté ET activé dans le profil. */
+  const isEligible = useCallback(
+    (m: ModuleType) => available.includes(m) && profile.modules[m].actif,
+    [available, profile],
+  );
 
   const rt = useRef<EngineRuntime>({
     shown: {},
@@ -82,12 +94,12 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
       }
       if (r.rotationRunning && t >= r.rotAt) {
         r.rotAt = t + TIMING.rotation;
-        autoRotate(r, limit, profile);
+        autoRotate(r, limit, profile, MODULE_ORDER.filter(isEligible));
       }
       setNow(t);
     }, TIMING.tick);
     return () => window.clearInterval(id);
-  }, [limit, profile]);
+  }, [limit, profile, isEligible]);
 
   // La rotation persistée du profil pilote l'état runtime.
   useEffect(() => {
@@ -96,10 +108,26 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
     bump();
   }, [profile.rotation, bump]);
 
+  // Affichage permanent (épinglage persisté) : un module épinglé (+ actif + implémenté)
+  // reste affiché en continu, hors rotation et hors expiration.
+  useEffect(() => {
+    const r = rt.current;
+    for (const m of MODULE_ORDER) {
+      const pinned = available.includes(m) && profile.modules[m].actif && !!profile.modules[m].epingle;
+      if (pinned) r.shown[m] = TIMING.pinned;
+      else if (r.shown[m] === TIMING.pinned) delete r.shown[m];
+    }
+    bump();
+  }, [profile, available, bump]);
+
   const trigger = useCallback(
     (m: ModuleType): TriggerResult => {
       const r = rt.current;
       const t = Date.now();
+      if (!isEligible(m)) {
+        onMessage?.(`⛔ ${cmdOf(m)} module inactif`, '#9A8A84');
+        return 'inactive';
+      }
       if (t < r.cooldown[m]) {
         onMessage?.(`⛔ ${cmdOf(m)} en cooldown`, '#E8881C');
         return 'cooldown';
@@ -122,7 +150,7 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
       bump();
       return result;
     },
-    [limit, profile, onMessage, bump],
+    [limit, profile, onMessage, bump, isEligible],
   );
 
   const togglePin = useCallback(
@@ -166,11 +194,13 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
   }, [now, limit, trigger, togglePin, setRotationRunning]);
 }
 
-function autoRotate(r: EngineRuntime, limit: number, profile: Profile) {
-  const start = r.rotIdx;
-  for (let i = 0; i < MODULE_ORDER.length; i++) {
-    const idx = (start + i) % MODULE_ORDER.length;
-    const mod = MODULE_ORDER[idx];
+/** Fait entrer le prochain module éligible (implémenté + actif) dans le cycle. */
+function autoRotate(r: EngineRuntime, limit: number, profile: Profile, eligible: ModuleType[]) {
+  if (eligible.length === 0) return;
+  const start = r.rotIdx % eligible.length;
+  for (let i = 0; i < eligible.length; i++) {
+    const idx = (start + i) % eligible.length;
+    const mod = eligible[idx];
     if (!r.shown[mod] && !r.queue.includes(mod)) {
       r.rotIdx = idx + 1;
       if (Object.keys(r.shown).length < limit) {

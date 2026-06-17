@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { emblemBack, emblemUp } from '../../../assets';
+import { emblemBack, emblemUp } from '../../../assets/emblems';
 import { fonts } from '../../../theme/tokens';
 import type { Guild } from '../../../types';
 import { StateBadge } from '../../atoms/StateBadge/StateBadge';

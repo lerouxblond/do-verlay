@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { dofusIcon } from '../../../assets';
+import { dofusIcon } from '../../../assets/dofus';
 import type { DofusState } from '../../../types';
 import { completeSocle, fillLayer, imageLayer, levelLine, rootStyle } from './DofusIcon.styles';
 

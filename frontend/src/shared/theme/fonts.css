@@ -50,6 +50,36 @@ textarea {
   }
 }
 
+/* Entrée d'un module overlay (lever de rideau sobre) */
+@keyframes dv-module-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sortie d'un module overlay (fondu descendant — évite la disparition brute) */
+@keyframes dv-module-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+}
+
+/* Anneau de focus doré des champs du panel */
+.dv-field-input:focus {
+  border-color: #d4a843;
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.18);
+}
+
 /* Scrollbar discrète dorée (panel) */
 .dv-scroll::-webkit-scrollbar {
   width: 9px;

@@ -1,0 +1,116 @@
+// Package ws — canal de synchro live panel ↔ overlay(s).
+//
+// Relais en mémoire (sans base) : le panel publie l'état de config, le serveur le
+// rediffuse à tous les autres clients et le mémorise pour réhydrater un client qui se
+// connecte plus tard (typiquement l'overlay ouvert dans OBS). C'est ce que
+// BroadcastChannel ne peut PAS faire : franchir la frontière entre le navigateur du
+// streamer et le navigateur intégré d'OBS (process/localStorage distincts).
+//
+// Périmètre volontairement minimal (test d'intégration OBS) : pas de persistance ni de
+// notion de profil côté serveur — les messages sont relayés tels quels.
+package ws
+
+import (
+	"encoding/json"
+	"net/http"
+	"sync"
+
+	"github.com/gorilla/websocket"
+)
+
+var upgrader = websocket.Upgrader{
+	// Dev : on accepte toute origine (le navigateur d'OBS n'envoie pas d'Origin fiable).
+	CheckOrigin: func(*http.Request) bool { return true },
+}
+
+// Hub garde la liste des clients connectés et le dernier état publié.
+type Hub struct {
+	mu        sync.Mutex
+	clients   map[*client]struct{}
+	lastState []byte // dernier message {"type":"state",...} pour réhydrater un nouveau client
+}
+
+func NewHub() *Hub {
+	return &Hub{clients: make(map[*client]struct{})}
+}
+
+type client struct {
+	conn *websocket.Conn
+	out  chan []byte
+}
+
+// ServeWS effectue l'upgrade HTTP→WebSocket et fait vivre le client.
+func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	c := &client{conn: conn, out: make(chan []byte, 16)}
+
+	h.mu.Lock()
+	h.clients[c] = struct{}{}
+	last := h.lastState
+	h.mu.Unlock()
+
+	if last != nil {
+		c.trySend(last) // réhydrate immédiatement (état courant)
+	}
+
+	go c.writePump()
+	h.readPump(c)
+}
+
+func (h *Hub) readPump(c *client) {
+	defer func() {
+		h.mu.Lock()
+		delete(h.clients, c)
+		h.mu.Unlock()
+		c.conn.Close()
+		close(c.out)
+	}()
+	for {
+		_, msg, err := c.conn.ReadMessage()
+		if err != nil {
+			return
+		}
+		h.relay(c, msg)
+	}
+}
+
+func (c *client) writePump() {
+	for msg := range c.out {
+		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+			c.conn.Close()
+			return
+		}
+	}
+}
+
+// relay rediffuse un message à tous les clients sauf l'émetteur ; mémorise le dernier état.
+func (h *Hub) relay(from *client, msg []byte) {
+	var head struct {
+		Type string `json:"type"`
+	}
+	if json.Unmarshal(msg, &head) == nil && head.Type == "state" {
+		h.mu.Lock()
+		h.lastState = msg
+		h.mu.Unlock()
+	}
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for c := range h.clients {
+		if c == from {
+			continue
+		}
+		c.trySend(msg)
+	}
+}
+
+// trySend dépose un message sans bloquer le hub (un client lent perd le message).
+func (c *client) trySend(msg []byte) {
+	select {
+	case c.out <- msg:
+	default:
+	}
+}

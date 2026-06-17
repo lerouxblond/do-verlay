@@ -7,6 +7,8 @@ const profile = (limit = 2) => {
   const p = createEmptyProfile();
   p.limite_modules = limit;
   p.rotation = false;
+  // On teste la mécanique du moteur sur tous les modules (indépendamment du défaut).
+  for (const m of Object.values(p.modules)) m.actif = true;
   return p;
 };
 

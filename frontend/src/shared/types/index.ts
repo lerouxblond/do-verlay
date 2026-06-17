@@ -10,6 +10,8 @@ export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'generique';
 export type AnchorZone = 'HG' | 'HD' | 'BG' | 'BD' | 'BAS';
 export type Gender = 'male' | 'female';
 export type GenericSize = 'S' | 'M' | 'L';
+/** Orientation d'affichage d'un module sur l'overlay. */
+export type ModuleLayout = 'vertical' | 'horizontal';
 
 export type DofusId = string;
 
@@ -66,6 +68,8 @@ export interface ModuleSettings {
   type: ModuleType;
   zone_ancrage: AnchorZone;
   actif: boolean;
+  /** Affichage permanent : le module reste à l'écran (hors rotation/expiration). */
+  epingle?: boolean;
   duree_affichage: number; // ms
   cooldown: number; // ms
   commande: string;
@@ -79,7 +83,15 @@ export interface Profile {
   limite_modules: number;
   rotation: boolean;
   modules: Record<ModuleType, ModuleSettings>;
+  /** Libellé d'objectif optionnel du Dofusdex (ex. « Objectif Dofus Trophées »). */
+  dofusdex_objectif?: string;
+  /** Orientation d'affichage du Dofusdex sur l'overlay (défaut vertical). */
+  dofusdex_format?: ModuleLayout;
+  /** Affiche le témoin de connexion sur l'overlay (défaut masqué). */
+  overlay_hud?: boolean;
+  /** État de chaque Dofus (toutes les entrées du référentiel). */
   dofus: Record<DofusId, DofusState>;
+  /** Dofus suivis, dans l'ordre d'affichage. L'appartenance à cette liste = « inclus ». */
   ordre: DofusId[];
   guild: Guild;
   perso: Character;

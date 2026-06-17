@@ -15,8 +15,8 @@ import {
   type ReactNode,
 } from 'react';
 import { BROADCAST_CHANNEL } from '../constants';
-import { cloneProfile } from '../data/seed';
 import type { ModuleType, Profile } from '../types';
+import { cloneProfile } from './profile';
 import { fromExport, loadState, saveState, toExport, type PersistedState } from './store';
 
 /** Intentions d'affichage éphémères (non persistées) panel → overlay. */

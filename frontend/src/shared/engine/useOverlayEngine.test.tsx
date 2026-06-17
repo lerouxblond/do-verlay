@@ -1,10 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { cloneProfile, SEED_PROFILES } from '../data/seed';
+import { createEmptyProfile } from '../config/profile';
 import { useOverlayEngine } from './useOverlayEngine';
 
 const profile = (limit = 2) => {
-  const p = cloneProfile(SEED_PROFILES[0]);
+  const p = createEmptyProfile();
   p.limite_modules = limit;
   p.rotation = false;
   return p;

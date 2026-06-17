@@ -1,7 +1,7 @@
 /** Persistance locale des profils (localStorage) + (dé)sérialisation. */
 import { STORAGE_KEY } from '../constants';
-import { SEED_PROFILES, cloneProfile } from '../data/seed';
 import type { Profile, ProfileExport } from '../types';
+import { cloneProfile, createEmptyProfile } from './profile';
 
 export interface PersistedState {
   profiles: Profile[];
@@ -16,9 +16,10 @@ export function loadState(): PersistedState {
       if (parsed.profiles?.length && parsed.activeId) return parsed;
     }
   } catch {
-    /* storage indisponible ou corrompu → seed */
+    /* storage indisponible ou corrompu → profil vierge */
   }
-  return { profiles: SEED_PROFILES.map(cloneProfile), activeId: SEED_PROFILES[0].id };
+  const profile = createEmptyProfile();
+  return { profiles: [profile], activeId: profile.id };
 }
 
 export function saveState(state: PersistedState): void {

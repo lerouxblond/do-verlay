@@ -26,11 +26,11 @@ const defaultModule = (
   commande: MODULES[type].command,
 });
 
-// Seul le Dofusdex est implémenté → actif par défaut ; les autres s'activeront quand
-// leur module sera construit (évite des créneaux de rotation vides à l'écran).
+// Les modules implémentés sont actifs par défaut ; les autres s'activeront quand leur
+// module sera construit (évite des créneaux de rotation vides à l'écran).
 const defaultModules = (): Profile['modules'] => ({
   dofusdex: defaultModule('dofusdex', 'HD', true),
-  etendard: defaultModule('etendard', 'BG', false),
+  etendard: defaultModule('etendard', 'BG', true),
   fiche: defaultModule('fiche', 'BD', false),
   generique: defaultModule('generique', 'BAS', false),
 });
@@ -50,7 +50,13 @@ export const createEmptyProfile = (id = 'profil-1'): Profile => ({
   overlay_hud: false,
   ordre: DOFUS_LIST.map((d) => d.id),
   dofus: emptyDofusStates(),
-  guild: { nom: '', emblem: { back: 1, up: 1 }, recrutement: 'closed', niveau_guilde: 1, tags: [] },
+  guild: {
+    nom: '',
+    emblem: { back: 1, up: 1, fond_couleur: '#C9363A', symbole_couleur: '#E8C877' },
+    recrutement: 'closed',
+    niveau_guilde: 1,
+    tags: [],
+  },
   perso: { nom: '', serveur: '', niveau: 1, pts_succes: 0, genre: 'male', classe: '' },
   generique: { kicker: '', contenu: '', taille: 'M' },
 });

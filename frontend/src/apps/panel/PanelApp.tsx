@@ -6,7 +6,6 @@
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { PanelLayout } from './components/PanelLayout/PanelLayout';
-import { DofusdexView } from './views/DofusdexView';
 import { GeneralView } from './views/GeneralView';
 import { ModuleRoute } from './views/ModuleRoute';
 import { ProfilesView } from './views/ProfilesView';
@@ -18,7 +17,6 @@ export function PanelApp() {
         <Route index element={<Navigate to="general" replace />} />
         <Route path="general" element={<GeneralView />} />
         <Route path="profils" element={<ProfilesView />} />
-        <Route path="modules/dofusdex" element={<DofusdexView />} />
         <Route path="modules/:type" element={<ModuleRoute />} />
         <Route path="*" element={<Navigate to="general" replace />} />
       </Route>

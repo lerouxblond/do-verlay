@@ -16,8 +16,8 @@ export function imageLayer(url: string, state: DofusState): CSSProperties {
   const { filter, opacity } = baseFilter(state);
   return {
     position: 'relative',
-    width: '82%',
-    height: '82%',
+    width: '92%',
+    height: '92%',
     background: `center/contain no-repeat url('${url}')`,
     filter,
     opacity,
@@ -33,8 +33,8 @@ export function fillLayer(url: string): CSSProperties {
     left: '50%',
     top: '50%',
     transform: 'translate(-50%,-50%)',
-    width: '82%',
-    height: '82%',
+    width: '92%',
+    height: '92%',
     background: `center/contain no-repeat url('${url}')`,
     WebkitMaskImage: mask,
     maskImage: mask,

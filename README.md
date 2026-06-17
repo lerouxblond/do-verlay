@@ -48,10 +48,12 @@ Variables serveur : `PORT` (défaut 8787), `STATIC_DIR` (défaut `../frontend/di
 - **Réglages généraux** : chaîne Twitch, nombre de modules simultanés, rotation automatique,
   témoin de connexion de l'overlay (masqué par défaut, à activer pour le calage dans OBS).
 - **Profils** : créer / charger / renommer / dupliquer / supprimer / exporter-importer (JSON).
-- **Modules › Dofusdex** : activer, affichage permanent (épinglé), format vertical/horizontal,
+- **Modules › Dofusdex** : préfabs, activer, affichage permanent (épinglé), format vertical/horizontal,
   zone d'ancrage, commande chat, durée, cooldown, libellé d'objectif, et la collection de Dofus
   (suivre/retirer, état À faire / En cours / Obtenu, réordonner au glisser-déposer). Aperçu live inclus.
-- Les autres modules (Étendard, Fiche, Générique) sont prévus mais pas encore implémentés.
+- **Modules › Étendard de guilde** : nom, niveau, blason (fond + symbole), statut de recrutement,
+  conditions (étiquettes), + les réglages communs du module. Aperçu live inclus.
+- Les modules Fiche perso et Générique sont prévus mais pas encore implémentés.
 
 ## Qualité
 ```bash

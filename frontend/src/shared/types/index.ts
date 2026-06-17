@@ -31,10 +31,14 @@ export interface DofusdexLine {
   ordre_affichage: number;
 }
 
-/** Blason de guilde = paire (fond d'écusson, symbole) de la bibliothèque d'emblèmes. */
+/** Blason de guilde = forme du fond + symbole + leurs couleurs. */
 export interface GuildEmblem {
   back: number;
   up: number;
+  /** Couleur de remplissage du fond (le contour de l'asset est conservé). */
+  fond_couleur?: string;
+  /** Couleur du symbole. */
+  symbole_couleur?: string;
 }
 
 export interface Guild {

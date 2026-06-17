@@ -4,12 +4,12 @@
  * d'affichage (rotation auto, commandes, file, cooldowns, épinglage). Chaque module visible
  * est rendu à sa zone d'ancrage, avec animation d'entrée ET de sortie (présence).
  */
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useConfig } from '@shared/config/ConfigContext';
 import { MODULE_ORDER } from '@shared/constants';
 import { useOverlayEngine } from '@shared/engine/useOverlayEngine';
-import type { ModuleType, Profile } from '@shared/types';
-import { DofusdexModule } from './modules/DofusdexModule/DofusdexModule';
+import type { ModuleType } from '@shared/types';
+import { AVAILABLE_MODULES, OVERLAY_MODULES } from './modules/registry';
 import {
   anchorStyle,
   dotStyle,
@@ -21,14 +21,6 @@ import {
   stageStyle,
   type Phase,
 } from './OverlayApp.styles';
-
-/** Modules implémentés (rendu disponible). */
-const AVAILABLE: ModuleType[] = ['dofusdex'];
-
-/** Rendu de chaque module implémenté. */
-const MODULE_VIEWS: Partial<Record<ModuleType, (profile: Profile) => ReactNode>> = {
-  dofusdex: (profile) => <DofusdexModule profile={profile} />,
-};
 
 /** Durée de l'animation de sortie (doit suivre @keyframes dv-module-out). */
 const EXIT_MS = 400;
@@ -89,9 +81,9 @@ const clock = (d: Date) =>
 
 export function OverlayApp() {
   const { profile } = useConfig();
-  const engine = useOverlayEngine(profile, { available: AVAILABLE });
+  const engine = useOverlayEngine(profile, { available: AVAILABLE_MODULES });
 
-  const visible = MODULE_ORDER.filter((m) => engine.isVisible(m) && MODULE_VIEWS[m]);
+  const visible = MODULE_ORDER.filter((m) => engine.isVisible(m) && OVERLAY_MODULES[m]);
   const presence = useModulePresence(visible);
 
   const [syncedAt, setSyncedAt] = useState<Date>(() => new Date());
@@ -108,7 +100,7 @@ export function OverlayApp() {
     <div style={stageStyle}>
       {presence.map(({ m, phase }) => (
         <div key={m} style={anchorStyle(profile.modules[m].zone_ancrage, phase)}>
-          {MODULE_VIEWS[m]!(profile)}
+          {OVERLAY_MODULES[m]!(profile)}
         </div>
       ))}
 

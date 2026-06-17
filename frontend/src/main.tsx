@@ -17,6 +17,7 @@ import { colors, fonts } from '@shared/theme/tokens';
 import { AuthProvider } from '@panel/auth/AuthContext';
 import { RequireAuth } from '@panel/auth/RequireAuth';
 import { Launcher } from './apps/launcher/Launcher';
+import '@shared/theme/fonts'; // polices auto-hébergées (@fontsource)
 import '@shared/theme/fonts.css';
 
 const PanelApp = lazy(() =>

@@ -34,12 +34,13 @@ export const softColors = {
   alertSoft: 'rgba(232,136,28,0.16)',
 } as const;
 
+// Familles auto-hébergées (cf. theme/fonts.ts) + repli générique si jamais indisponible.
 export const fonts = {
   display: "'Cinzel Decorative', serif",
-  title: "'Playfair Display', serif",
+  title: "'Playfair Display Variable', 'Playfair Display', serif",
   label: "'Barlow Semi Condensed', sans-serif",
-  body: "'Inter', sans-serif",
-  mono: "'JetBrains Mono', monospace",
+  body: "'Inter Variable', 'Inter', system-ui, sans-serif",
+  mono: "'JetBrains Mono Variable', 'JetBrains Mono', monospace",
 } as const;
 
 export const radii = {

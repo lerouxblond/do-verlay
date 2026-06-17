@@ -34,6 +34,29 @@ export const inputStyle: CSSProperties = {
   width: '100%',
 };
 
+export const colorInputStyle: CSSProperties = {
+  width: 54,
+  height: 38,
+  padding: 3,
+  border: `1px solid ${colors.border}`,
+  borderRadius: radii.md,
+  background: colors.bg,
+  cursor: 'pointer',
+};
+
+export const colorRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+};
+
+export const colorValueStyle: CSSProperties = {
+  fontFamily: fonts.mono,
+  fontSize: 12,
+  color: colors.textMuted,
+  textTransform: 'uppercase',
+};
+
 export const selectStyle: CSSProperties = {
   ...inputStyle,
   cursor: 'pointer',

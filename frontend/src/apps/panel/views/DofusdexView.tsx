@@ -1,39 +1,25 @@
 /**
  * Configuration complète du module Dofusdex (l'aperçu réutilise le composant overlay
- * DofusdexModule). Tout est câblé sur le profil actif : aperçu live, réglages du module
- * (profile.modules.dofusdex + dofusdex_format + épinglage), libellé d'objectif et collection
+ * DofusdexModule). Câblé sur le profil actif : préfabs, aperçu live, réglages communs du
+ * module (via ModuleSettingsCard) + format propre, libellé d'objectif et collection
  * (profile.ordre = Dofus suivis & ordonnés ; profile.dofus[id] = état).
  *
  * La liste des Dofus suivis est défilable et réordonnable au glisser-déposer : les Dofus
- * SLIDENT en direct vers leur nouvelle place (déplacement, pas échange) avec une animation FLIP.
+ * SLIDENT en direct vers leur nouvelle place (déplacement) avec une animation FLIP.
  */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react';
 import { Button } from '@shared/components/atoms/Button/Button';
 import { DofusIcon } from '@shared/components/atoms/DofusIcon/DofusIcon';
 import { ProgressBar } from '@shared/components/atoms/ProgressBar/ProgressBar';
 import { useConfig } from '@shared/config/ConfigContext';
-import { ANCHOR_ZONES, MODULES } from '@shared/constants';
 import { DOFUS_BY_ID, DOFUS_LIST } from '@shared/data/dofus';
 import { colors, fonts, lattice, radii } from '@shared/theme/tokens';
-import type { AnchorZone, DofusState, ModuleLayout } from '@shared/types';
+import type { DofusState, ModuleLayout } from '@shared/types';
 import { DofusdexModule } from '@overlay/modules/DofusdexModule/DofusdexModule';
+import { ModuleSettingsCard } from '../components/ModuleSettingsCard/ModuleSettingsCard';
 import { PanelCard } from '../components/PanelCard/PanelCard';
-import {
-  Field,
-  NumberStepper,
-  SelectInput,
-  StateSegment,
-  TextInput,
-  Toggle,
-} from '../components/controls/controls';
-
-const ZONE_LABELS: Record<AnchorZone, string> = {
-  HG: 'Haut · gauche',
-  HD: 'Haut · droite',
-  BG: 'Bas · gauche',
-  BD: 'Bas · droite',
-  BAS: 'Bas · centre',
-};
+import { Field, SelectInput, StateSegment, TextInput } from '../components/controls/controls';
+import { DOFUSDEX_PREFABS, type DofusdexPrefab } from './dofusdexPrefabs';
 
 const FORMAT_LABELS: Record<ModuleLayout, string> = {
   vertical: 'Vertical (portrait)',
@@ -49,6 +35,23 @@ const stageStyle: CSSProperties = {
   backgroundImage: lattice(),
   border: `1px solid ${colors.border}`,
   overflowX: 'auto',
+};
+
+const prefabRow: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  flexWrap: 'wrap',
+  marginBottom: 4,
+};
+
+const prefabLabelStyle: CSSProperties = {
+  fontFamily: fonts.label,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  fontSize: 11,
+  fontWeight: 700,
+  color: colors.textMuted,
 };
 
 const scrollStyle: CSSProperties = {
@@ -149,8 +152,6 @@ const availBtnStyle: CSSProperties = {
 
 export function DofusdexView() {
   const { profile, updateProfile } = useConfig();
-  const mod = profile.modules.dofusdex;
-  const meta = MODULES.dofusdex;
 
   const suivis = profile.ordre;
   const disponibles = DOFUS_LIST.filter((d) => !suivis.includes(d.id));
@@ -209,6 +210,14 @@ export function DofusdexView() {
       p.ordre = p.ordre.filter((x) => x !== id);
     });
 
+  const applyPrefab = (pre: DofusdexPrefab) =>
+    updateProfile((p) => {
+      p.ordre = [...pre.ordre];
+      p.dofus = {};
+      for (const id of pre.ordre) p.dofus[id] = pre.dofus?.[id] ?? 'not_started';
+      if (pre.objectif !== undefined) p.dofusdex_objectif = pre.objectif;
+    });
+
   /** Déplace (slide) le Dofus saisi vers la position de la cible. */
   const moveTo = (targetId: string) => {
     const did = dragIdRef.current;
@@ -259,101 +268,25 @@ export function DofusdexView() {
         </div>
       </PanelCard>
 
-      <PanelCard title="Réglages du module" sub="Diffusion sur l'overlay" suit="pique" collapsible>
-        <Field label="Module actif" hint="Désactivé, le Dofusdex ne s'affiche jamais sur l'overlay.">
-          <Toggle
-            checked={mod.actif}
-            label={mod.actif ? 'Activé' : 'Désactivé'}
-            onChange={(v) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.actif = v;
-              })
-            }
-          />
-        </Field>
-
-        <Field
-          label="Affichage permanent"
-          hint="Garde le module affiché en continu (hors rotation et expiration)."
-        >
-          <Toggle
-            checked={mod.epingle ?? false}
-            label={mod.epingle ? 'Épinglé' : 'Selon rotation / commande'}
-            onChange={(v) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.epingle = v;
-              })
-            }
-          />
-        </Field>
-
-        <Field label="Format d'affichage" hint="Portrait compact ou bannière paysage.">
-          <SelectInput
-            value={profile.dofusdex_format ?? 'vertical'}
-            options={(Object.keys(FORMAT_LABELS) as ModuleLayout[]).map((f) => ({
-              value: f,
-              label: FORMAT_LABELS[f],
-            }))}
-            onChange={(e) =>
-              updateProfile((p) => {
-                p.dofusdex_format = e.target.value as ModuleLayout;
-              })
-            }
-          />
-        </Field>
-
-        <Field label="Zone d'ancrage" hint="Coin de l'écran où le module apparaît.">
-          <SelectInput
-            value={mod.zone_ancrage}
-            options={ANCHOR_ZONES.map((z) => ({ value: z, label: ZONE_LABELS[z] }))}
-            onChange={(e) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.zone_ancrage = e.target.value as AnchorZone;
-              })
-            }
-          />
-        </Field>
-
-        <Field label="Commande chat" hint="Mot-clé que les viewers tapent pour afficher le module.">
-          <TextInput
-            value={mod.commande}
-            placeholder={meta.command}
-            onChange={(e) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.commande = e.target.value;
-              })
-            }
-          />
-        </Field>
-
-        <Field label="Durée d'affichage" hint="Temps pendant lequel le module reste visible.">
-          <NumberStepper
-            value={Math.round(mod.duree_affichage / 1000)}
-            min={1}
-            max={60}
-            suffix="secondes"
-            onChange={(v) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.duree_affichage = v * 1000;
-              })
-            }
-          />
-        </Field>
-
-        <Field label="Cooldown" hint="Délai minimal entre deux déclenchements par commande.">
-          <NumberStepper
-            value={Math.round(mod.cooldown / 1000)}
-            min={0}
-            max={120}
-            suffix="secondes"
-            onChange={(v) =>
-              updateProfile((p) => {
-                p.modules.dofusdex.cooldown = v * 1000;
-              })
-            }
-          />
-        </Field>
-      </PanelCard>
+      <ModuleSettingsCard
+        module="dofusdex"
+        extra={
+          <Field label="Format d'affichage" hint="Portrait compact ou bannière paysage.">
+            <SelectInput
+              value={profile.dofusdex_format ?? 'vertical'}
+              options={(Object.keys(FORMAT_LABELS) as ModuleLayout[]).map((f) => ({
+                value: f,
+                label: FORMAT_LABELS[f],
+              }))}
+              onChange={(e) =>
+                updateProfile((p) => {
+                  p.dofusdex_format = e.target.value as ModuleLayout;
+                })
+              }
+            />
+          </Field>
+        }
+      />
 
       <PanelCard
         title="Objectif"
@@ -387,6 +320,21 @@ export function DofusdexView() {
           ) : undefined
         }
       >
+        <div style={prefabRow}>
+          <span style={prefabLabelStyle}>Préfab :</span>
+          {DOFUSDEX_PREFABS.map((pre) => (
+            <Button
+              key={pre.id}
+              variant="secondary"
+              size="sm"
+              title={pre.description}
+              onClick={() => applyPrefab(pre)}
+            >
+              {pre.nom}
+            </Button>
+          ))}
+        </div>
+
         {suivis.length === 0 ? (
           <p style={emptyStyle}>Aucun Dofus suivi. Ajoute-en depuis la liste ci-dessous.</p>
         ) : (

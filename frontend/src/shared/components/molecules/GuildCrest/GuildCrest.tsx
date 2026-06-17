@@ -1,9 +1,35 @@
 import type { CSSProperties } from 'react';
 import { emblemBack, emblemUp } from '../../../assets/emblems';
 import { fonts } from '../../../theme/tokens';
-import type { Guild } from '../../../types';
+import type { Guild, GuildEmblem } from '../../../types';
 import { StateBadge } from '../../atoms/StateBadge/StateBadge';
-import { backStyle, crestStyle, upStyle } from './GuildCrest.styles';
+import { contourStyle, crestStyle, fondStyle, symbolStyle } from './GuildCrest.styles';
+
+const FOND_DEFAUT = '#C9363A';
+const SYMBOLE_DEFAUT = '#E8C877';
+
+export interface EmblemCrestProps {
+  emblem: GuildEmblem;
+  size?: number;
+}
+
+/**
+ * Écusson composite seul : forme du fond teintée + asset d'origine (contour/ombrage) multiplié
+ * par-dessus + symbole teinté centré. Réutilisé par le blason complet et l'aperçu du panel.
+ */
+export function EmblemCrest({ emblem, size = 64 }: EmblemCrestProps) {
+  const back = emblemBack(emblem.back);
+  const up = emblemUp(emblem.up);
+  const fond = emblem.fond_couleur ?? FOND_DEFAUT;
+  const symbole = emblem.symbole_couleur ?? SYMBOLE_DEFAUT;
+  return (
+    <div style={crestStyle(size)}>
+      {back && <div style={fondStyle(back, fond)} />}
+      {back && <img src={back} alt="" style={contourStyle} />}
+      {up && <div style={symbolStyle(up, symbole)} />}
+    </div>
+  );
+}
 
 export interface GuildCrestProps {
   guild: Guild;
@@ -12,16 +38,11 @@ export interface GuildCrestProps {
   style?: CSSProperties;
 }
 
-/** Blason réel (fond d'écusson + symbole composités) + nom + niveau + pastille recrutement. */
+/** Blason composite + nom + niveau + pastille recrutement. */
 export function GuildCrest({ guild, crestSize = 64, style }: GuildCrestProps) {
-  const back = emblemBack(guild.emblem.back);
-  const up = emblemUp(guild.emblem.up);
   return (
     <div style={{ display: 'flex', gap: 13, alignItems: 'center', ...style }}>
-      <div style={crestStyle(crestSize)}>
-        {back && <img src={back} alt="" style={backStyle} />}
-        {up && <img src={up} alt="" style={upStyle} />}
-      </div>
+      <EmblemCrest emblem={guild.emblem} size={crestSize} />
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <span

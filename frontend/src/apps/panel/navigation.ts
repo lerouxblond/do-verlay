@@ -6,6 +6,7 @@
 import { MODULE_ORDER, MODULES } from '@shared/constants';
 import type { ModuleType } from '@shared/types';
 import type { Suit } from '@shared/theme/tokens';
+import { READY_MODULES } from './modules/registry';
 
 export type SectionId = 'general' | 'profils' | ModuleType;
 /** `ready` = page fonctionnelle ; `soon` = squelette en attente du module. */
@@ -25,9 +26,6 @@ export interface SectionGroup {
   label: string;
   sections: PanelSection[];
 }
-
-/** Modules déjà implémentés côté panel (config disponible). */
-const READY_MODULES: ModuleType[] = ['dofusdex'];
 
 const moduleSections: PanelSection[] = MODULE_ORDER.map((type) => ({
   id: type,

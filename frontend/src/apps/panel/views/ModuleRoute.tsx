@@ -1,11 +1,14 @@
 /**
- * Route d'une section module non encore implémentée (`/modules/:type`).
- * Valide le paramètre contre le référentiel ; un type inconnu redirige vers l'accueil.
+ * Route d'un module (`/panel/modules/:type`). Dispatche via le registre des vues de config :
+ * - type implémenté → sa vue de configuration ;
+ * - type connu mais non implémenté → squelette « à venir » ;
+ * - type inconnu → retour à l'accueil.
  */
 import { Navigate, useParams } from 'react-router-dom';
 import { MODULE_ORDER } from '@shared/constants';
 import type { ModuleType } from '@shared/types';
 import { Placeholder } from '../components/Placeholder/Placeholder';
+import { PANEL_MODULE_VIEWS } from '../modules/registry';
 import { DEFAULT_PATH } from '../navigation';
 
 const isModuleType = (t: string | undefined): t is ModuleType =>
@@ -14,5 +17,6 @@ const isModuleType = (t: string | undefined): t is ModuleType =>
 export function ModuleRoute() {
   const { type } = useParams();
   if (!isModuleType(type)) return <Navigate to={DEFAULT_PATH} replace />;
-  return <Placeholder module={type} />;
+  const View = PANEL_MODULE_VIEWS[type];
+  return View ? <View /> : <Placeholder module={type} />;
 }

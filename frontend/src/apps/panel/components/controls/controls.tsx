@@ -5,6 +5,9 @@
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
 import type { DofusState } from '@shared/types';
 import {
+  colorInputStyle,
+  colorRowStyle,
+  colorValueStyle,
   fieldStyle,
   hintStyle,
   inputStyle,
@@ -65,6 +68,26 @@ export function SelectInput({ options, ...rest }: SelectInputProps) {
         </option>
       ))}
     </select>
+  );
+}
+
+export interface ColorInputProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+/** Sélecteur de couleur (pastille native). */
+export function ColorInput({ value, onChange }: ColorInputProps) {
+  return (
+    <div style={colorRowStyle}>
+      <input
+        type="color"
+        value={value}
+        style={colorInputStyle}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <span style={colorValueStyle}>{value}</span>
+    </div>
   );
 }
 

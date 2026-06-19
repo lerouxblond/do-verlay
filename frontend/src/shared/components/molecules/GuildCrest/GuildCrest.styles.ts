@@ -5,7 +5,7 @@ export const crestStyle = (size: number): CSSProperties => ({
   flex: 'none',
   width: size,
   height: size,
-  isolation: 'isolate', // contient le mix-blend-mode du contour
+  isolation: 'isolate', // isole l'empilement des calques (fond / contour / symbole)
   filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.55))',
 });
 

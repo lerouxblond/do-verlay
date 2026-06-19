@@ -203,3 +203,134 @@ textarea {
 .dv-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ============================================================================
+   États interactifs partagés (l'inline ne fait ni :hover ni :focus-visible).
+   On reste sur des effets non conflictuels avec les `background` inline des
+   composants (filter / transform / box-shadow / outline) sauf mention contraire.
+   ============================================================================ */
+
+/* Boutons du design system (atoms/Button) — lift + éclat au survol, enfoncement au clic. */
+.dv-btn {
+  transition: filter 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+.dv-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.dv-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* Boutons du stepper numérique (− / +) — bg posé par la classe (retiré de l'inline). */
+.dv-step-btn {
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.dv-step-btn:hover:not(:disabled) {
+  background: rgba(212, 168, 67, 0.12);
+}
+
+/* Interrupteur (toggle) — halo doux au survol (le fond on/off reste inline). */
+.dv-toggle {
+  transition: box-shadow 0.16s ease, filter 0.16s ease;
+}
+.dv-toggle:hover {
+  filter: brightness(1.06);
+}
+
+/* Segment d'état (À faire / En cours / Obtenu) — couleur/bg pilotés inline → survol non conflictuel. */
+.dv-segment-btn {
+  transition: filter 0.14s ease;
+}
+.dv-segment-btn:hover {
+  filter: brightness(1.25);
+}
+
+/* Sélecteur de couleur + chevron repliable. (`border` inline → survol en box-shadow.) */
+.dv-color {
+  transition: box-shadow 0.14s ease;
+}
+.dv-color:hover {
+  box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.5);
+}
+.dv-chevron {
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+  border-radius: 8px;
+}
+.dv-chevron:hover {
+  background: rgba(212, 168, 67, 0.1);
+  color: #e8c877;
+}
+
+/* Survol des champs (texte + select) — `border` est posé en inline (l'emporterait) → on
+   matérialise le survol par un liseré doré en box-shadow. Le focus doré reste géré plus haut
+   (.dv-field-input:focus). */
+.dv-field-input {
+  transition: box-shadow 0.14s ease;
+}
+.dv-field-input:hover:not(:focus) {
+  box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.35);
+}
+
+/* Focus clavier visible et cohérent (doré) sur tous les contrôles interactifs. */
+.dv-btn:focus-visible,
+.dv-step-btn:focus-visible,
+.dv-toggle:focus-visible,
+.dv-segment-btn:focus-visible,
+.dv-color:focus-visible,
+.dv-chevron:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ----------------------------------------------------------------------------
+   Entrée orchestrée d'une vue du panel : les enfants directs (en-tête + cartes)
+   se révèlent en cascade. Le conteneur est keyé par la route → rejoué à chaque
+   changement de section (transition de route douce). Même langage que dv-rise.
+   ---------------------------------------------------------------------------- */
+@keyframes dv-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dv-view-enter > * {
+  animation: dv-view-enter 0.5s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.dv-view-enter > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.dv-view-enter > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.dv-view-enter > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.dv-view-enter > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.dv-view-enter > *:nth-child(5) {
+  animation-delay: 0.26s;
+}
+.dv-view-enter > *:nth-child(n + 6) {
+  animation-delay: 0.32s;
+}
+
+/* Accessibilité : neutralise les nouveaux effets si l'utilisateur refuse l'animation. */
+@media (prefers-reduced-motion: reduce) {
+  .dv-btn:hover:not(:disabled),
+  .dv-btn:active:not(:disabled) {
+    transform: none;
+  }
+  .dv-view-enter > * {
+    animation: none;
+  }
+}

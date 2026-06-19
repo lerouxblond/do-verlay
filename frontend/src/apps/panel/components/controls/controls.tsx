@@ -83,6 +83,7 @@ export function ColorInput({ value, onChange }: ColorInputProps) {
       <input
         type="color"
         value={value}
+        className="dv-color"
         style={colorInputStyle}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -115,6 +116,7 @@ export function NumberStepper({
     <div style={stepperStyle}>
       <button
         type="button"
+        className="dv-step-btn"
         style={stepBtnStyle(value <= min)}
         disabled={value <= min}
         onClick={dec}
@@ -125,6 +127,7 @@ export function NumberStepper({
       <span style={stepValueStyle}>{value}</span>
       <button
         type="button"
+        className="dv-step-btn"
         style={stepBtnStyle(value >= max)}
         disabled={value >= max}
         onClick={inc}
@@ -152,6 +155,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
         type="button"
         id={id}
         role="switch"
+        className="dv-toggle"
         aria-checked={checked}
         aria-label={label}
         style={toggleTrackStyle(checked)}
@@ -187,6 +191,7 @@ export function StateSegment({ value, onChange }: StateSegmentProps) {
         <button
           key={s.value}
           type="button"
+          className="dv-segment-btn"
           style={segmentBtnStyle(value === s.value, SEGMENT_TONES[s.value])}
           aria-pressed={value === s.value}
           onClick={() => onChange(s.value)}

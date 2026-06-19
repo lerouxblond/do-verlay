@@ -88,7 +88,7 @@ export const stepBtnStyle = (disabled: boolean): CSSProperties => ({
   width: 38,
   height: 40,
   border: 'none',
-  background: 'transparent',
+  // `background` posé par `.dv-step-btn` (fonts.css) pour autoriser le survol (l'inline l'emporterait).
   color: disabled ? colors.textFaint : colors.accent,
   cursor: disabled ? 'not-allowed' : 'pointer',
 });

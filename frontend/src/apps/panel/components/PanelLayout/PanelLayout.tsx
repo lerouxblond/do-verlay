@@ -25,7 +25,9 @@ export function PanelLayout() {
       <Sidebar />
       <div style={mainStyle}>
         <Topbar />
-        <main style={contentStyle} className="dv-scroll">
+        {/* `key={pathname}` : remonte le sous-arbre à chaque section → l'entrée en cascade
+            (`.dv-view-enter`) se rejoue, donnant une transition de route douce. */}
+        <main key={pathname} style={contentStyle} className="dv-scroll dv-view-enter">
           {section && (
             <div>
               <div style={headingStyle}>

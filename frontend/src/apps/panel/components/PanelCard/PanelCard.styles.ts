@@ -48,7 +48,7 @@ export const titleAreaStyle = (clickable: boolean): CSSProperties => ({
 export const chevronStyle = (open: boolean): CSSProperties => ({
   flex: 'none',
   border: 'none',
-  background: 'transparent',
+  // `background`/`color` de survol posés par `.dv-chevron` (fonts.css) — l'inline les bloquerait.
   cursor: 'pointer',
   color: colors.accent,
   fontSize: 13,

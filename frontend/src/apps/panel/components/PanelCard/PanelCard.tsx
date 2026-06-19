@@ -56,6 +56,7 @@ export function PanelCard({
         {collapsible && (
           <button
             type="button"
+            className="dv-chevron"
             style={chevronStyle(open)}
             onClick={toggle}
             aria-label={open ? 'Replier' : 'Déplier'}

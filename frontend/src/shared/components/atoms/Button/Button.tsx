@@ -13,6 +13,7 @@ export function Button({
   size = 'md',
   disabled,
   style,
+  className,
   children,
   ...rest
 }: ButtonProps) {
@@ -20,6 +21,7 @@ export function Button({
     <button
       type="button"
       disabled={disabled}
+      className={['dv-btn', className].filter(Boolean).join(' ')}
       style={{ ...buttonStyle(variant, size, disabled), ...style }}
       {...rest}
     >

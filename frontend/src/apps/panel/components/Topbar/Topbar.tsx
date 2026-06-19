@@ -14,6 +14,7 @@ export function Topbar() {
     <header style={barStyle}>
       <span style={labelStyle}>Profil actif</span>
       <select
+        className="dv-field-input"
         style={profileSelectStyle}
         value={activeId}
         onChange={(e) => switchProfile(e.target.value)}

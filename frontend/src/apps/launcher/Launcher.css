@@ -132,6 +132,7 @@
 }
 
 .dv-launch__card {
+  position: relative;
   width: 108px;
   height: 152px;
   border-radius: 13px;
@@ -205,9 +206,6 @@
   font-weight: 800;
   line-height: 0.78;
   text-align: center;
-}
-.dv-launch__card {
-  position: relative;
 }
 
 /* --- Cartes d'action (CTA) --- */

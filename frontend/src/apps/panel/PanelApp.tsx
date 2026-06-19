@@ -6,6 +6,7 @@
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { PanelLayout } from './components/PanelLayout/PanelLayout';
+import { DispositionView } from './views/DispositionView';
 import { GeneralView } from './views/GeneralView';
 import { ModuleRoute } from './views/ModuleRoute';
 import { ProfilesView } from './views/ProfilesView';
@@ -17,6 +18,7 @@ export function PanelApp() {
         <Route index element={<Navigate to="general" replace />} />
         <Route path="general" element={<GeneralView />} />
         <Route path="profils" element={<ProfilesView />} />
+        <Route path="disposition" element={<DispositionView />} />
         <Route path="modules/:type" element={<ModuleRoute />} />
         <Route path="*" element={<Navigate to="general" replace />} />
       </Route>

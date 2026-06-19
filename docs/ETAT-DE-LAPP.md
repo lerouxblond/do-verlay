@@ -1,15 +1,18 @@
 # État de l'app — Do-verlay « Chapiteau »
 
 Audit de ce qui est réellement implémenté, au 19 juin 2026 (maj : Alliance + refonte blason, puis
-landing « chapiteau », chrome panel, mention légale Ankama, polish Dofusdex). À tenir à jour.
+landing « chapiteau », chrome panel, mention légale Ankama, polish Dofusdex, **free-display :
+dispositions libres + configs Dofusdex sauvegardables + mode test**). À tenir à jour.
 
 ## Pattern « module » (à reproduire pour les suivants)
 Un module = (1) **vue de config panel** dans `apps/panel/views/`, enregistrée dans
 `apps/panel/modules/registry.ts` (`PANEL_MODULE_VIEWS` → `READY_MODULES`) ; (2) **composant overlay**
 dans `apps/overlay/modules/`, enregistré dans `apps/overlay/modules/registry.tsx`
 (`OVERLAY_MODULES` → `AVAILABLE_MODULES`) ; (3) **actif par défaut** dans `shared/config/profile.ts`.
-Les réglages communs viennent de `components/ModuleSettingsCard` (actif, épinglé, zone, commande,
-durée, cooldown). Ajouter un module ne touche que ces points.
+Les réglages communs viennent de `components/ModuleSettingsCard` (actif, épinglé, commande,
+durée, cooldown). Ajouter un module ne touche que ces points. **Le positionnement n'est plus un
+réglage de module** : il vit dans les dispositions (page Disposition), automatiquement disponible
+pour tout module rendu (`OVERLAY_MODULES`).
 
 ## Architecture
 - **SPA React unique** (`frontend/`, Vite + TS), un seul `index.html` (stub) → `src/main.tsx`.
@@ -20,6 +23,7 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   | `/overlay` | Overlay transparent (OBS) — `ConfigProvider publish={false}` | public |
   | `/panel/general` | Réglages généraux | derrière `RequireAuth` |
   | `/panel/profils` | Gestion des profils | id. |
+  | `/panel/disposition` | Éditeur de disposition (positionnement libre, page large) | id. |
   | `/panel/modules/dofusdex` | Config Dofusdex | id. |
   | `/panel/modules/etendard` | Config Étendard (guilde **+** alliance) | id. |
   | `/panel/modules/alliance` | Redirige vers Étendard (config embarquée) | id. |
@@ -36,13 +40,32 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   auto, échec silencieux sans serveur. Prop `publish` : le panel publie, l'overlay est abonné seul.
   Anti-écho via comparaison JSON (`lastSync`).
 
+L'état synchronisé (`PersistedState`) porte : **profils** (`activeId`), **dispositions**
+(`layouts` + `activeLayoutId`, indépendants des profils), **configs Dofusdex** sauvegardées
+(`dofusdexPresets`), et le **mode test** (`previewAll`). Hors synchro : l'image de référence de
+l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lourde et inutile à l'overlay).
+
 ## Implémenté ✅
 - **Panel — Réglages généraux** : chaîne Twitch, limite de modules simultanés, rotation auto,
   témoin de connexion overlay (toggle, masqué par défaut). Câblés sur le profil réel.
 - **Panel — Profils** : créer, charger, renommer, dupliquer, supprimer, export/import JSON. Réel.
-- **Panel — Dofusdex (config complète)** : **préfabs** (système extensible, 1 préfab « Vierge » pour
-  l'instant), module actif, **affichage permanent (épinglé)**, format **vertical/horizontal**, zone
-  d'ancrage, commande, durée, cooldown, libellé d'objectif ; collection (suivre/retirer, état À
+- **Panel — Disposition (positionnement libre)** : éditeur visuel (`components/LayoutEditor`) sur un
+  aperçu **16:9 deux colonnes** (= scène overlay 1920×1080 mise à l'échelle via `ResizeObserver`).
+  **Glisser-déposer** au pointeur (positions en %, résolution-indépendant), **aimantation** tiers/
+  centre, panneau de réglages : **ancre 3×3** (recalage sans saut via la boîte mesurée), **échelle**,
+  x/y. WYSIWYG (vrais modules, mémoïsés par profil). **Capture Dofus en fond** (panel-only). Les
+  **dispositions** sont une entité globale (`config/layout.ts`, `Layout`), **indépendantes des
+  profils** (`activeLayoutId` ≠ `activeId`) : nouvelle/renommer/dupliquer/supprimer/appliquer +
+  export-import JSON. **Mode test** (`previewAll`) : affichage permanent de tous les modules sur la
+  source OBS pour le calage. Migration : `store.ensureLayouts` dérive une dispo par défaut des
+  anciennes zones d'ancrage (`HG→TL`…), `normalizeLayout` complète les placements manquants.
+- **Panel — Dofusdex (config complète)** : carte **« Mes configurations »** regroupant les opérations
+  de collection — **modèles rapides** intégrés (« Vierge » vide, « Complète » suit tout le
+  référentiel ; système extensible) + **configs sauvegardables** (`dofusdexPresets` : enregistrer la
+  collection — Dofus suivis + états + objectif — puis la réappliquer au profil actif sans changer de
+  profil ; renommer/supprimer). Placée juste avant « Dofus suivis » → la liste suivie et « Ajouter un
+  Dofus » sont **adjacentes** (édition sans coupure). Puis module actif, **affichage permanent (épinglé)**, format
+  **vertical/horizontal**, commande, durée, cooldown, libellé d'objectif ; collection (suivre/retirer, état À
   faire/En cours/Obtenu via segment, **réordonnancement glisser-déposer animé — slide/FLIP**), barre de
   progression, aperçu live. Sections **repliables**.
   - **Drag & drop affiné** : l'image de drag est la **ligne entière** (`setDragImage`, plus seulement
@@ -61,7 +84,7 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   `!alliance`) + nom + **acronyme `[ABC]`** (pas de niveau) + blason + recrutement/conditions. Le
   toggle `actif` de chaque ModuleSettingsCard active/désactive l'entité. Aperçu live des deux cartes.
 - **Module `alliance`** = nouveau `ModuleType` (sibling d'`etendard`) : commande, rotation, cooldown,
-  zone et épinglage **indépendants** (moteur). Configuré dans la page Étendard, donc filtré de la
+  placement et épinglage **indépendants** (moteur + disposition). Configuré dans la page Étendard, donc filtré de la
   navigation (`EMBEDDED_NAV_MODULES`) ; `/panel/modules/alliance` redirige vers Étendard.
 - **Refonte du blason — `EmblemDesigner`** (composant panel réutilisé guilde + alliance) : aperçu
   live, couleurs fond/symbole, **grille de formes au rendu composé** (fond teinté + contour apparié,
@@ -73,9 +96,13 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   `mix-blend-mode: multiply`) donc **non teinté par la couleur du fond** ; symbole **centré**. Rendu
   généralisé : `EmblemCrest`/`CrestHeader` + `GuildCrest`/`AllianceCrest`.
 - **Migration profils** (`store.normalizeProfile`) : complète les anciens profils localStorage /
-  importés dépourvus d'`alliance` (et nouveaux modules) avec les valeurs par défaut.
-- **Overlay** : scène transparente, rend les modules visibles à leur zone d'ancrage avec **animations
-  d'entrée ET de sortie** (présence). Lit le profil via les 3 canaux.
+  importés dépourvus d'`alliance` (et nouveaux modules) avec les valeurs par défaut. Idem
+  dispositions (`store.ensureLayouts` / `normalizeLayout`) et nouveaux champs d'état
+  (`dofusdexPresets`, `previewAll`) au chargement.
+- **Overlay** : scène transparente, rend les modules visibles à leur **placement libre** (disposition
+  active) via 3 calques découplés (position / placement+échelle / animation) avec **animations
+  d'entrée ET de sortie** (présence). En **mode test**, tous les modules rendus sont affichés en
+  continu. Lit profil + disposition via les 3 canaux.
 - **Module Dofusdex (visuel overlay)** : `CardShell` carreau + objectif + jauge + grille des Dofus
   (états). Deux formats. Réutilisé comme aperçu dans le panel.
 - **Module Étendard (visuel overlay)** : `CardShell` trèfle + `GuildCrest` (blason + nom + niveau +
@@ -109,7 +136,8 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   (migration `server/migrations/0001_init.sql` écrite mais non appliquée).
 - **Auth Twitch** : garde placeholder, pas d'OAuth réel.
 - **Collision/empilement multi-modules** : 3 modules implémentés (dofusdex, etendard, alliance) →
-  empilement à éprouver visuellement quand plusieurs partagent une même zone d'ancrage.
+  le positionnement libre lève la contrainte des zones fixes, mais l'empilement reste à éprouver
+  visuellement quand deux modules sont placés au même endroit (pas de détection de chevauchement).
 
 ## À faire côté utilisateur (visuel)
 - ~~Tri des assets de blason~~ → **fait** : assets séparés dans `assets/guild_alliance/`
@@ -126,6 +154,11 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   Flush garanti sur `pagehide`.
 - **Réordonnancement Dofusdex au drop** : copie de travail locale pendant le glisser (FLIP conservé),
   commit unique au relâchement → fin du spam `updateProfile` à chaque `onDragEnter`.
+- **Éditeur de disposition** : rendu des modules **mémoïsé par profil** (`useMemo`) → pendant le
+  glisser (le profil ne change pas), les éléments gardent la même référence, React saute la
+  réconciliation des sous-arbres (icônes Dofusdex) ; seuls les `div` de position bougent. La
+  persistance/diffusion des placements reste **coalescée par le débounce ~180 ms** (pas d'envoi
+  WebSocket par frame).
 - **Emblèmes externalisés** (`vite.config` `assetsInlineLimit` ciblé sur `guild_alliance/`) : les
   ~550 PNG ne sont plus inlinés en base64 → chunk **541 Ko → 70 Ko** (gzip 364 → 16), images chargées
   à la demande et cacheables.

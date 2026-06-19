@@ -20,9 +20,18 @@ import {
   type ReactNode,
 } from 'react';
 import { BROADCAST_CHANNEL } from '../constants';
-import type { ModuleType, Profile } from '../types';
+import type { DofusdexPreset, Layout, ModulePlacement, ModuleType, Profile } from '../types';
+import { cloneLayout, createDefaultLayout } from './layout';
 import { cloneProfile, createEmptyProfile } from './profile';
-import { fromExport, loadState, saveState, toExport, type PersistedState } from './store';
+import {
+  fromExport,
+  fromLayoutExport,
+  loadState,
+  saveState,
+  toExport,
+  toLayoutExport,
+  type PersistedState,
+} from './store';
 
 /** Intentions d'affichage éphémères (non persistées) panel → overlay. */
 export type DisplayIntent =
@@ -47,6 +56,38 @@ export interface ConfigValue {
   deleteProfile: (id: string) => void;
   exportProfile: () => void;
   importProfile: (file: File) => Promise<void>;
+
+  // — Dispositions (placements des modules, indépendantes des profils) —
+  layouts: Layout[];
+  activeLayoutId: string;
+  /** Disposition appliquée (à l'overlay et à l'éditeur). */
+  layout: Layout;
+  /** Bascule la disposition active — ne touche jamais au profil. */
+  switchLayout: (id: string) => void;
+  /** Crée une disposition (dérivée du profil actif) et la rend active. */
+  newLayout: () => void;
+  duplicateLayout: () => void;
+  /** Supprime une disposition (jamais la dernière). */
+  deleteLayout: (id: string) => void;
+  renameLayout: (id: string, nom: string) => void;
+  /** Édite le placement d'un module dans la disposition active. */
+  updatePlacement: (module: ModuleType, recipe: (p: ModulePlacement) => void) => void;
+  exportLayout: () => void;
+  importLayout: (file: File) => Promise<void>;
+
+  // — Configs Dofusdex (instantanés de collection, indépendantes des profils) —
+  dofusdexPresets: DofusdexPreset[];
+  /** Enregistre la collection Dofusdex actuelle du profil comme nouvelle config nommée. */
+  saveDofusdexPreset: (nom: string) => void;
+  /** Applique une config au profil actif (remplace Dofus suivis + états + objectif). */
+  applyDofusdexPreset: (id: string) => void;
+  deleteDofusdexPreset: (id: string) => void;
+  renameDofusdexPreset: (id: string, nom: string) => void;
+
+  /** Mode test : affichage permanent de tous les modules sur l'overlay (calage OBS). */
+  previewAll: boolean;
+  setPreviewAll: (on: boolean) => void;
+
   /** Émet une intention d'affichage (déclenchement / épinglage). */
   emitIntent: (intent: DisplayIntent) => void;
   /** S'abonne aux intentions reçues (overlay). Renvoie le désabonnement. */
@@ -215,14 +256,14 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       const copy = cloneProfile(src);
       copy.id = `${src.id}-${Date.now().toString(36)}`;
       copy.nom = `${src.nom} (copie)`;
-      return { profiles: [...prev.profiles, copy], activeId: copy.id };
+      return { ...prev, profiles: [...prev.profiles, copy], activeId: copy.id };
     });
   }, []);
 
   const newProfile = useCallback(() => {
     setState((prev) => {
       const fresh = createEmptyProfile(`profil-${Date.now().toString(36)}`);
-      return { profiles: [...prev.profiles, fresh], activeId: fresh.id };
+      return { ...prev, profiles: [...prev.profiles, fresh], activeId: fresh.id };
     });
   }, []);
 
@@ -231,7 +272,7 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       if (prev.profiles.length <= 1) return prev; // on garde toujours un profil
       const profiles = prev.profiles.filter((p) => p.id !== id);
       const activeId = prev.activeId === id ? profiles[0].id : prev.activeId;
-      return { profiles, activeId };
+      return { ...prev, profiles, activeId };
     });
   }, []);
 
@@ -254,8 +295,144 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       const exists = prev.profiles.some((p) => p.id === imported.id);
       const id = exists ? `${imported.id}-${Date.now().toString(36)}` : imported.id;
       const profile = { ...imported, id };
-      return { profiles: [...prev.profiles, profile], activeId: id };
+      return { ...prev, profiles: [...prev.profiles, profile], activeId: id };
     });
+  }, []);
+
+  const layout = useMemo(
+    () => state.layouts.find((l) => l.id === state.activeLayoutId) ?? state.layouts[0],
+    [state],
+  );
+
+  const switchLayout = useCallback((id: string) => {
+    setState((prev) =>
+      prev.layouts.some((l) => l.id === id) ? { ...prev, activeLayoutId: id } : prev,
+    );
+  }, []);
+
+  const newLayout = useCallback(() => {
+    setState((prev) => {
+      const active = prev.profiles.find((p) => p.id === prev.activeId);
+      const fresh = createDefaultLayout(`disposition-${Date.now().toString(36)}`, active);
+      fresh.nom = 'Nouvelle disposition';
+      return { ...prev, layouts: [...prev.layouts, fresh], activeLayoutId: fresh.id };
+    });
+  }, []);
+
+  const duplicateLayout = useCallback(() => {
+    setState((prev) => {
+      const src = prev.layouts.find((l) => l.id === prev.activeLayoutId);
+      if (!src) return prev;
+      const copy = cloneLayout(src);
+      copy.id = `${src.id}-${Date.now().toString(36)}`;
+      copy.nom = `${src.nom} (copie)`;
+      return { ...prev, layouts: [...prev.layouts, copy], activeLayoutId: copy.id };
+    });
+  }, []);
+
+  const deleteLayout = useCallback((id: string) => {
+    setState((prev) => {
+      if (prev.layouts.length <= 1) return prev; // on garde toujours une disposition
+      const layouts = prev.layouts.filter((l) => l.id !== id);
+      const activeLayoutId = prev.activeLayoutId === id ? layouts[0].id : prev.activeLayoutId;
+      return { ...prev, layouts, activeLayoutId };
+    });
+  }, []);
+
+  const renameLayout = useCallback((id: string, nom: string) => {
+    setState((prev) => ({
+      ...prev,
+      layouts: prev.layouts.map((l) => (l.id === id ? { ...l, nom } : l)),
+    }));
+  }, []);
+
+  const updatePlacement = useCallback(
+    (module: ModuleType, recipe: (p: ModulePlacement) => void) => {
+      setState((prev) => {
+        const layouts = prev.layouts.map((l) => {
+          if (l.id !== prev.activeLayoutId) return l;
+          const next = cloneLayout(l);
+          recipe(next.placements[module]);
+          return next;
+        });
+        return { ...prev, layouts };
+      });
+    },
+    [],
+  );
+
+  const exportLayout = useCallback(() => {
+    const data = toLayoutExport(layout);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `do-verlay-disposition-${layout.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [layout]);
+
+  const importLayout = useCallback(async (file: File) => {
+    const text = await file.text();
+    const imported = fromLayoutExport(JSON.parse(text));
+    if (!imported) throw new Error('Fichier de disposition invalide');
+    setState((prev) => {
+      const exists = prev.layouts.some((l) => l.id === imported.id);
+      const id = exists ? `${imported.id}-${Date.now().toString(36)}` : imported.id;
+      const next = { ...imported, id };
+      return { ...prev, layouts: [...prev.layouts, next], activeLayoutId: id };
+    });
+  }, []);
+
+  const saveDofusdexPreset = useCallback((nom: string) => {
+    setState((prev) => {
+      const src = prev.profiles.find((p) => p.id === prev.activeId);
+      if (!src) return prev;
+      const dofus = Object.fromEntries(src.ordre.map((id) => [id, src.dofus[id] ?? 'not_started']));
+      const preset: DofusdexPreset = {
+        id: `dofusdex-${Date.now().toString(36)}`,
+        nom: nom.trim() || 'Config sans nom',
+        ordre: [...src.ordre],
+        dofus,
+        objectif: src.dofusdex_objectif ?? '',
+      };
+      return { ...prev, dofusdexPresets: [...prev.dofusdexPresets, preset] };
+    });
+  }, []);
+
+  const applyDofusdexPreset = useCallback((id: string) => {
+    setState((prev) => {
+      const preset = prev.dofusdexPresets.find((p) => p.id === id);
+      if (!preset) return prev;
+      const profiles = prev.profiles.map((p) => {
+        if (p.id !== prev.activeId) return p;
+        const next = cloneProfile(p);
+        next.ordre = [...preset.ordre];
+        next.dofus = { ...next.dofus };
+        for (const dofusId of preset.ordre) next.dofus[dofusId] = preset.dofus[dofusId] ?? 'not_started';
+        next.dofusdex_objectif = preset.objectif;
+        return next;
+      });
+      return { ...prev, profiles };
+    });
+  }, []);
+
+  const deleteDofusdexPreset = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      dofusdexPresets: prev.dofusdexPresets.filter((p) => p.id !== id),
+    }));
+  }, []);
+
+  const renameDofusdexPreset = useCallback((id: string, nom: string) => {
+    setState((prev) => ({
+      ...prev,
+      dofusdexPresets: prev.dofusdexPresets.map((p) => (p.id === id ? { ...p, nom } : p)),
+    }));
+  }, []);
+
+  const setPreviewAll = useCallback((on: boolean) => {
+    setState((prev) => (prev.previewAll === on ? prev : { ...prev, previewAll: on }));
   }, []);
 
   const emitIntent = useCallback(
@@ -282,13 +459,36 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       deleteProfile,
       exportProfile,
       importProfile,
+      layouts: state.layouts,
+      activeLayoutId: state.activeLayoutId,
+      layout,
+      switchLayout,
+      newLayout,
+      duplicateLayout,
+      deleteLayout,
+      renameLayout,
+      updatePlacement,
+      exportLayout,
+      importLayout,
+      dofusdexPresets: state.dofusdexPresets,
+      saveDofusdexPreset,
+      applyDofusdexPreset,
+      deleteDofusdexPreset,
+      renameDofusdexPreset,
+      previewAll: state.previewAll,
+      setPreviewAll,
       emitIntent,
       subscribeIntent,
     }),
     [
       state.profiles,
       state.activeId,
+      state.layouts,
+      state.activeLayoutId,
+      state.dofusdexPresets,
+      state.previewAll,
       profile,
+      layout,
       updateProfile,
       switchProfile,
       duplicateProfile,
@@ -296,6 +496,19 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       deleteProfile,
       exportProfile,
       importProfile,
+      switchLayout,
+      newLayout,
+      duplicateLayout,
+      deleteLayout,
+      renameLayout,
+      updatePlacement,
+      exportLayout,
+      importLayout,
+      saveDofusdexPreset,
+      applyDofusdexPreset,
+      deleteDofusdexPreset,
+      renameDofusdexPreset,
+      setPreviewAll,
       emitIntent,
       subscribeIntent,
     ],

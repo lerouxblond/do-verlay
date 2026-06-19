@@ -48,9 +48,17 @@ Variables serveur : `PORT` (défaut 8787), `STATIC_DIR` (défaut `../frontend/di
 - **Réglages généraux** : chaîne Twitch, nombre de modules simultanés, rotation automatique,
   témoin de connexion de l'overlay (masqué par défaut, à activer pour le calage dans OBS).
 - **Profils** : créer / charger / renommer / dupliquer / supprimer / exporter-importer (JSON).
-- **Modules › Dofusdex** : préfabs, activer, affichage permanent (épinglé), format vertical/horizontal,
-  zone d'ancrage, commande chat, durée, cooldown, libellé d'objectif, et la collection de Dofus
-  (suivre/retirer, état À faire / En cours / Obtenu, réordonner au glisser-déposer). Aperçu live inclus.
+- **Disposition** : positionnement **libre** des modules (glisser-déposer sur un aperçu 16:9 deux
+  colonnes, échelle, ancrage 3×3, aimantation, capture Dofus en fond). Les dispositions sont
+  **indépendantes des profils** : on en sauvegarde plusieurs (« Setup 1080p », « 1440p »…) et on
+  bascule sans changer de profil. Export/import JSON séparé. Un **mode test** force l'affichage
+  permanent de tous les modules sur la source OBS pour le calage (à couper avant de streamer).
+- **Modules › Dofusdex** : modèles rapides (« Vierge » vide / « Complète » suit tout) +
+  **configurations sauvegardables** (enregistrer la collection — Dofus suivis + états + objectif —
+  puis la réappliquer sans changer de profil), regroupés dans « Mes configurations » ;
+  activer, affichage permanent (épinglé), format vertical/horizontal, commande chat, durée,
+  cooldown, libellé d'objectif, et la collection de Dofus (suivre/retirer, état À faire / En
+  cours / Obtenu, réordonner au glisser-déposer). Aperçu live inclus.
 - **Modules › Étendard de guilde** : nom, niveau, blason (fond + symbole), statut de recrutement,
   conditions (étiquettes), + les réglages communs du module. Aperçu live inclus.
 - Les modules Fiche perso et Générique sont prévus mais pas encore implémentés.
@@ -70,6 +78,10 @@ cd ../server && go build ./...
   `src/shared/components` ; spécifique dans `src/apps/{panel,overlay,launcher}`.
 - Moteur d'affichage : `src/shared/engine/useOverlayEngine.ts` (rotation, file, cooldowns, épinglage).
 - Synchro : `src/shared/config/ConfigContext.tsx` (localStorage + BroadcastChannel + WebSocket).
+  Source de vérité unique : profils (contenu), **dispositions** (placements libres, cf.
+  `config/layout.ts`), **configs Dofusdex** sauvegardées, et le **mode test** — toutes
+  synchronisées vers l'overlay/OBS. L'image de référence de l'éditeur reste locale au panel
+  (clé localStorage dédiée, hors synchro).
 
 ## Docs
 - `docs/ETAT-DE-LAPP.md` — audit de ce qui est implémenté / différé.

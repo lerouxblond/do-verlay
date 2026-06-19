@@ -1,6 +1,7 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEY } from '../constants';
+import { DOFUS_LIST } from '../data/dofus';
 import { ConfigProvider, useConfig, type ConfigValue } from './ConfigContext';
 
 // Capture l'API du contexte pour piloter le provider depuis le test.
@@ -38,6 +39,48 @@ describe('ConfigProvider — synchro débouncée', () => {
     act(() => void vi.advanceTimersByTime(300));
     // Après la fenêtre : une seule écriture, contenant le changement.
     expect(localStorage.getItem(STORAGE_KEY)).toContain('Les Bateleurs');
+  });
+
+  it('enregistre puis applique une config Dofusdex sans changer de profil', () => {
+    localStorage.clear();
+    render(
+      <ConfigProvider>
+        <Capture />
+      </ConfigProvider>,
+    );
+
+    const firstId = DOFUS_LIST[0].id;
+    act(() => {
+      api!.updateProfile((p) => {
+        p.ordre = [firstId];
+        p.dofus[firstId] = 'complete';
+        p.dofusdex_objectif = 'Rush';
+      });
+    });
+    act(() => api!.saveDofusdexPreset('Ma config'));
+    expect(api!.dofusdexPresets).toHaveLength(1);
+
+    const profileId = api!.activeId;
+    // On vide la collection, puis on réapplique la config sauvegardée.
+    act(() => api!.updateProfile((p) => void (p.ordre = [])));
+    act(() => api!.applyDofusdexPreset(api!.dofusdexPresets[0].id));
+
+    expect(api!.activeId).toBe(profileId); // le profil n'a pas changé
+    expect(api!.profile.ordre).toEqual([firstId]);
+    expect(api!.profile.dofus[firstId]).toBe('complete');
+    expect(api!.profile.dofusdex_objectif).toBe('Rush');
+  });
+
+  it('bascule le mode test (affichage permanent)', () => {
+    localStorage.clear();
+    render(
+      <ConfigProvider>
+        <Capture />
+      </ConfigProvider>,
+    );
+    expect(api!.previewAll).toBe(false);
+    act(() => api!.setPreviewAll(true));
+    expect(api!.previewAll).toBe(true);
   });
 
   it('coalesce une rafale de changements en une seule écriture finale', () => {

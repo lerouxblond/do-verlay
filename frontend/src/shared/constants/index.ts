@@ -109,6 +109,15 @@ export const STORAGE_KEY = 'do-verlay:profiles';
 export const BROADCAST_CHANNEL = 'do-verlay';
 
 /**
+ * Préfixe de clé localStorage de l'image de référence de l'éditeur de disposition.
+ * Stockée À PART de l'état synchronisé : volumineuse, panel-only, jamais diffusée à l'overlay.
+ */
+export const EDITOR_BG_PREFIX = 'do-verlay:editor-bg:';
+
+/** Marge par défaut des placements hérités, en % de la scène 1920×1080 (= 40 px). */
+export const LAYOUT_MARGIN_PCT = { x: (40 / 1920) * 100, y: (40 / 1080) * 100 } as const;
+
+/**
  * Mention légale — DOFUS et les illustrations associées sont la propriété d'Ankama Studio.
  * Affichée sur la landing et dans le panel ; source unique pour rester cohérent.
  */

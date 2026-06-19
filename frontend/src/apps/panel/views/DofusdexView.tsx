@@ -159,8 +159,29 @@ const availBtnStyle: CSSProperties = {
   textAlign: 'left',
 };
 
+const savedRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 10px',
+  borderRadius: radii.md,
+  border: `1px solid ${colors.border}`,
+  background: colors.bg,
+};
+
+const saveRowStyle: CSSProperties = { display: 'flex', gap: 8, alignItems: 'center' };
+
 export function DofusdexView() {
-  const { profile, updateProfile } = useConfig();
+  const {
+    profile,
+    updateProfile,
+    dofusdexPresets,
+    saveDofusdexPreset,
+    applyDofusdexPreset,
+    deleteDofusdexPreset,
+    renameDofusdexPreset,
+  } = useConfig();
+  const [presetName, setPresetName] = useState('');
 
   const suivis = profile.ordre;
   const disponibles = DOFUS_LIST.filter((d) => !suivis.includes(d.id));
@@ -365,20 +386,13 @@ export function DofusdexView() {
       </PanelCard>
 
       <PanelCard
-        title={`Dofus suivis (${suivis.length})`}
-        sub="Glisse ⠿ pour déplacer un Dofus · choisis l'état de chacun"
-        suit="trefle"
+        title="Mes configurations"
+        sub="Modèles rapides, enregistrer et réappliquer une collection — sans changer de profil"
+        suit="carreau"
         collapsible
-        action={
-          suivis.length > 0 ? (
-            <Button variant="ghost" size="sm" onClick={resetStates}>
-              Tout remettre à faire
-            </Button>
-          ) : undefined
-        }
       >
         <div style={prefabRow}>
-          <span style={prefabLabelStyle}>Préfab :</span>
+          <span style={prefabLabelStyle}>Modèles rapides :</span>
           {DOFUSDEX_PREFABS.map((pre) => (
             <Button
               key={pre.id}
@@ -392,6 +406,72 @@ export function DofusdexView() {
           ))}
         </div>
 
+        <Field
+          label="Enregistrer la config actuelle"
+          hint="Sauvegarde les Dofus suivis, leurs états et l'objectif sous un nom."
+        >
+          <div style={saveRowStyle}>
+            <div style={{ flex: 1 }}>
+              <TextInput
+                value={presetName}
+                placeholder="ex. Rush Trophées"
+                onChange={(e) => setPresetName(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="accent"
+              size="sm"
+              disabled={!presetName.trim()}
+              onClick={() => {
+                saveDofusdexPreset(presetName);
+                setPresetName('');
+              }}
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </Field>
+
+        {dofusdexPresets.length === 0 ? (
+          <p style={emptyStyle}>Aucune config enregistrée pour le moment.</p>
+        ) : (
+          <div style={scrollStyle} className="dv-scroll">
+            {dofusdexPresets.map((preset) => (
+              <div key={preset.id} style={savedRowStyle}>
+                <div style={{ flex: 1 }}>
+                  <TextInput
+                    value={preset.nom}
+                    onChange={(e) => renameDofusdexPreset(preset.id, e.target.value)}
+                  />
+                </div>
+                <span style={{ ...emptyStyle, fontStyle: 'normal', whiteSpace: 'nowrap' }}>
+                  {preset.ordre.length} Dofus
+                </span>
+                <Button variant="secondary" size="sm" onClick={() => applyDofusdexPreset(preset.id)}>
+                  Appliquer
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => deleteDofusdexPreset(preset.id)}>
+                  Supprimer
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </PanelCard>
+
+      <PanelCard
+        title={`Dofus suivis (${suivis.length})`}
+        sub="Glisse ⠿ pour déplacer un Dofus · choisis l'état de chacun"
+        suit="trefle"
+        collapsible
+        action={
+          suivis.length > 0 ? (
+            <Button variant="ghost" size="sm" onClick={resetStates}>
+              Tout remettre à faire
+            </Button>
+          ) : undefined
+        }
+      >
         {suivis.length === 0 ? (
           <p style={emptyStyle}>Aucun Dofus suivi. Ajoute-en depuis la liste ci-dessous.</p>
         ) : (

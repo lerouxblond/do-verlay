@@ -10,6 +10,7 @@
  *     objectif: 'Objectif Dofus Trophées',
  *   }
  */
+import { DOFUS_LIST } from '@shared/data/dofus';
 import type { DofusId, DofusState } from '@shared/types';
 
 export interface DofusdexPrefab {
@@ -30,6 +31,13 @@ export const DOFUSDEX_PREFABS: DofusdexPrefab[] = [
     nom: 'Vierge',
     description: 'Aucun Dofus suivi — collection à composer soi-même.',
     ordre: [],
+    objectif: '',
+  },
+  {
+    id: 'complet',
+    nom: 'Complète',
+    description: 'Suit tous les Dofus du référentiel (tous « à faire »).',
+    ordre: DOFUS_LIST.map((d) => d.id),
     objectif: '',
   },
 ];

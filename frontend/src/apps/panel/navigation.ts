@@ -8,7 +8,7 @@ import type { ModuleType } from '@shared/types';
 import type { Suit } from '@shared/theme/tokens';
 import { READY_MODULES } from './modules/registry';
 
-export type SectionId = 'general' | 'profils' | ModuleType;
+export type SectionId = 'general' | 'profils' | 'disposition' | ModuleType;
 /** `ready` = page fonctionnelle ; `soon` = squelette en attente du module. */
 export type SectionStatus = 'ready' | 'soon';
 
@@ -20,6 +20,8 @@ export interface PanelSection {
   status: SectionStatus;
   /** Chemin de route (sans le « # » du HashRouter). */
   path: string;
+  /** Page large (zone de contenu élargie) — ex. l'éditeur de disposition. */
+  wide?: boolean;
 }
 
 export interface SectionGroup {
@@ -57,6 +59,15 @@ export const SECTION_GROUPS: SectionGroup[] = [
         suit: 'carreau',
         status: 'ready',
         path: '/panel/profils',
+      },
+      {
+        id: 'disposition',
+        label: 'Disposition',
+        sub: 'Positionnement libre des modules',
+        suit: 'pique',
+        status: 'ready',
+        path: '/panel/disposition',
+        wide: true,
       },
     ],
   },

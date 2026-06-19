@@ -11,11 +11,13 @@ import { useOverlayEngine } from '@shared/engine/useOverlayEngine';
 import type { ModuleType } from '@shared/types';
 import { AVAILABLE_MODULES, OVERLAY_MODULES } from './modules/registry';
 import {
-  anchorStyle,
+  animPhaseStyle,
   dotStyle,
   hudStyle,
   labelStyle,
   metaStyle,
+  placedStyle,
+  positionerStyle,
   profileStyle,
   sepStyle,
   stageStyle,
@@ -80,10 +82,13 @@ const clock = (d: Date) =>
   d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 export function OverlayApp() {
-  const { profile } = useConfig();
+  const { profile, layout, previewAll } = useConfig();
   const engine = useOverlayEngine(profile, { available: AVAILABLE_MODULES });
 
-  const visible = MODULE_ORDER.filter((m) => engine.isVisible(m) && OVERLAY_MODULES[m]);
+  // Mode test (calage OBS) : on force tous les modules rendus à l'écran, en continu.
+  const visible = previewAll
+    ? MODULE_ORDER.filter((m) => OVERLAY_MODULES[m])
+    : MODULE_ORDER.filter((m) => engine.isVisible(m) && OVERLAY_MODULES[m]);
   const presence = useModulePresence(visible);
 
   const [syncedAt, setSyncedAt] = useState<Date>(() => new Date());
@@ -98,11 +103,16 @@ export function OverlayApp() {
 
   return (
     <div style={stageStyle}>
-      {presence.map(({ m, phase }) => (
-        <div key={m} style={anchorStyle(profile.modules[m].zone_ancrage, phase)}>
-          {OVERLAY_MODULES[m]!(profile)}
-        </div>
-      ))}
+      {presence.map(({ m, phase }) => {
+        const placement = layout.placements[m];
+        return (
+          <div key={m} style={positionerStyle(placement)}>
+            <div style={placedStyle(placement)}>
+              <div style={animPhaseStyle(phase)}>{OVERLAY_MODULES[m]!(profile)}</div>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Témoin de synchro — masqué par défaut, activable depuis les réglages généraux. */}
       {profile.overlay_hud && (

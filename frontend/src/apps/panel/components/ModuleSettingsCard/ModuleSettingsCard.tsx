@@ -5,19 +5,13 @@
  * (ex. le format du Dofusdex). Base à reproduire pour anticiper les modules suivants.
  */
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useConfig } from '@shared/config/ConfigContext';
-import { ANCHOR_ZONES, MODULES } from '@shared/constants';
-import type { AnchorZone, ModuleSettings, ModuleType } from '@shared/types';
+import { MODULES } from '@shared/constants';
+import { colors } from '@shared/theme/tokens';
+import type { ModuleSettings, ModuleType } from '@shared/types';
 import { PanelCard } from '../PanelCard/PanelCard';
-import { Field, NumberStepper, SelectInput, TextInput, Toggle } from '../controls/controls';
-
-export const ZONE_LABELS: Record<AnchorZone, string> = {
-  HG: 'Haut · gauche',
-  HD: 'Haut · droite',
-  BG: 'Bas · gauche',
-  BD: 'Bas · droite',
-  BAS: 'Bas · centre',
-};
+import { Field, NumberStepper, TextInput, Toggle } from '../controls/controls';
 
 export interface ModuleSettingsCardProps {
   module: ModuleType;
@@ -55,12 +49,13 @@ export function ModuleSettingsCard({ module, extra }: ModuleSettingsCardProps) {
 
       {extra}
 
-      <Field label="Zone d'ancrage" hint="Coin de l'écran où le module apparaît.">
-        <SelectInput
-          value={mod.zone_ancrage}
-          options={ANCHOR_ZONES.map((z) => ({ value: z, label: ZONE_LABELS[z] }))}
-          onChange={(e) => set((m) => void (m.zone_ancrage = e.target.value as AnchorZone))}
-        />
+      <Field
+        label="Position sur l'overlay"
+        hint="Le placement (position libre + échelle) se règle dans la section Disposition."
+      >
+        <Link to="/panel/disposition" style={{ color: colors.accentBright, fontWeight: 600 }}>
+          Ouvrir l'éditeur de disposition →
+        </Link>
       </Field>
 
       <Field label="Commande chat" hint="Mot-clé que les viewers tapent pour afficher le module.">

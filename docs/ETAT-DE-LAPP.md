@@ -1,6 +1,6 @@
 # État de l'app — Do-verlay « Chapiteau »
 
-Audit de ce qui est réellement implémenté, au 17 juin 2026 (maj : Étendard + polices). À tenir à jour.
+Audit de ce qui est réellement implémenté, au 19 juin 2026 (maj : Alliance + refonte blason). À tenir à jour.
 
 ## Pattern « module » (à reproduire pour les suivants)
 Un module = (1) **vue de config panel** dans `apps/panel/views/`, enregistrée dans
@@ -20,7 +20,9 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   | `/panel/general` | Réglages généraux | derrière `RequireAuth` |
   | `/panel/profils` | Gestion des profils | id. |
   | `/panel/modules/dofusdex` | Config Dofusdex | id. |
-  | `/panel/modules/:type` | Squelette « Bientôt » (etendard/fiche/generique) | id. |
+  | `/panel/modules/etendard` | Config Étendard (guilde **+** alliance) | id. |
+  | `/panel/modules/alliance` | Redirige vers Étendard (config embarquée) | id. |
+  | `/panel/modules/:type` | Squelette « Bientôt » (fiche/generique) | id. |
   | `*` | redirige vers `/` | — |
 - **Garde d'auth = PLACEHOLDER** (`apps/panel/auth/`) : `useAuth` renvoie toujours
   `authenticated`. Seam pour la future auth Twitch — aucune vérif réelle.
@@ -42,13 +44,26 @@ durée, cooldown). Ajouter un module ne touche que ces points.
   d'ancrage, commande, durée, cooldown, libellé d'objectif ; collection (suivre/retirer, état À
   faire/En cours/Obtenu via segment, **réordonnancement glisser-déposer animé — slide/FLIP**), barre de
   progression, aperçu live. Sections **repliables**.
-- **Panel — Étendard de guilde (config complète)** : réglages communs (ModuleSettingsCard) + nom,
-  niveau (**max 20**), **section Blason** dédiée (aperçu live + sélecteurs de couleur fond/symbole +
-  grilles de vignettes teintées : 34 formes de fond, 488 symboles paginés), statut de recrutement,
-  conditions (tags, max 5).
-- **Blason coloré** (`GuildEmblem.fond_couleur`/`symbole_couleur`, `EmblemCrest`) : fond et symbole
-  **teintés** par masques CSS (le contour/ombrage de l'asset est conservé via un calque multiply) ;
-  symbole **centré**.
+- **Panel — Étendard (config complète, guilde + alliance)** : une page à **onglets Guilde / Alliance**
+  (une seule entité affichée à la fois, anti-scroll). Guilde = réglages communs (ModuleSettingsCard,
+  commande `!guilde`) + nom + niveau
+  (**max 20**) + blason + recrutement/conditions. Alliance = réglages communs (commande
+  `!alliance`) + nom + **acronyme `[ABC]`** (pas de niveau) + blason + recrutement/conditions. Le
+  toggle `actif` de chaque ModuleSettingsCard active/désactive l'entité. Aperçu live des deux cartes.
+- **Module `alliance`** = nouveau `ModuleType` (sibling d'`etendard`) : commande, rotation, cooldown,
+  zone et épinglage **indépendants** (moteur). Configuré dans la page Étendard, donc filtré de la
+  navigation (`EMBEDDED_NAV_MODULES`) ; `/panel/modules/alliance` redirige vers Étendard.
+- **Refonte du blason — `EmblemDesigner`** (composant panel réutilisé guilde + alliance) : aperçu
+  live, couleurs fond/symbole, **grille de formes au rendu composé** (fond teinté + contour apparié,
+  contour selon variant guilde/alliance) et **symboles rangés par catégorie** (13 onglets, grille
+  paginée). Assets servis par `shared/assets/emblems.ts` depuis les dossiers triés
+  `assets/guild_alliance/` (`fonds/`, `guilde-countour/`, `alliance-countour/`, `symboles/<cat>/`).
+- **Blason coloré** (`GuildEmblem.fond_couleur`/`symbole_couleur`, `EmblemCrest variant`) : fond et
+  symbole **teintés** par masques CSS ; le **contour est un calque séparé dessiné tel quel** (plus de
+  `mix-blend-mode: multiply`) donc **non teinté par la couleur du fond** ; symbole **centré**. Rendu
+  généralisé : `EmblemCrest`/`CrestHeader` + `GuildCrest`/`AllianceCrest`.
+- **Migration profils** (`store.normalizeProfile`) : complète les anciens profils localStorage /
+  importés dépourvus d'`alliance` (et nouveaux modules) avec les valeurs par défaut.
 - **Overlay** : scène transparente, rend les modules visibles à leur zone d'ancrage avec **animations
   d'entrée ET de sortie** (présence). Lit le profil via les 3 canaux.
 - **Module Dofusdex (visuel overlay)** : `CardShell` carreau + objectif + jauge + grille des Dofus
@@ -71,13 +86,16 @@ durée, cooldown). Ajouter un module ne touche que ces points.
 - **Persistance serveur** : le WebSocket ne fait que relayer (mémoire). Pas de PostgreSQL/REST/CRUD
   (migration `server/migrations/0001_init.sql` écrite mais non appliquée).
 - **Auth Twitch** : garde placeholder, pas d'OAuth réel.
-- **Collision/empilement multi-modules** : un seul module implémenté → pas encore éprouvé.
+- **Collision/empilement multi-modules** : 3 modules implémentés (dofusdex, etendard, alliance) →
+  empilement à éprouver visuellement quand plusieurs partagent une même zone d'ancrage.
 
 ## À faire côté utilisateur (visuel)
-- **Tri des assets de blason** : les sets `emblem_up` (488) et `emblem_backcontent` (34) mélangent
-  fonds, symboles et contours, et le contour est aplati dans le fond. Pour une séparation fond/contour
-  parfaite (colorer le fond SANS le contour), fournir des calques séparés (forme de fond / masque de
-  remplissage / symbole). Le code (teinte par masque) est prêt à exploiter des assets propres.
+- ~~Tri des assets de blason~~ → **fait** : assets séparés dans `assets/guild_alliance/`
+  (`fonds/` 34, `guilde-countour/` 34, `alliance-countour/` 33, `symboles/` 486 en 13 catégories).
+- **Renommer les contours d'alliance** : `assets/guild_alliance/alliance-countour/*-128.png` →
+  `countour-N.png` pour s'apparier par index aux `fonds/fond-N.png` (comme la guilde). Tant que ce
+  n'est pas fait, le blason d'alliance s'affiche **sans son contour** (fond + symbole seulement) ;
+  le code est tolérant (`contourUrl` renvoie '' si l'index n'existe pas).
 
 ## Dette / points de vigilance
 - ~~Polices via `@import` réseau~~ → **résolu** : auto-hébergées via `@fontsource` (`shared/theme/fonts.ts`).
@@ -86,5 +104,5 @@ durée, cooldown). Ajouter un module ne touche que ces points.
 - Contraintes TS strictes (erasableSyntaxOnly : pas d'enum → `as const` ; `import type`).
 
 ## Vérifications
-`tsc --noEmit` OK · 12 tests OK · build front OK · `go build ./...` OK · synchro OBS validée par test
+`tsc --noEmit` OK · 15 tests OK · build front OK · lint 0 erreur · `go build ./...` OK · synchro OBS validée par test
 Playwright (2 contextes isolés : panel → overlay via WebSocket).

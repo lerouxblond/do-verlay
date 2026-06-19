@@ -5,7 +5,7 @@
 
 export type DofusState = 'not_started' | 'on_going' | 'complete';
 export type RecruitState = 'open' | 'on_request' | 'closed';
-export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'generique';
+export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'generique' | 'alliance';
 /** Zones d'ancrage de l'overlay : Haut/Bas × Gauche/Droite + Bas-centre. */
 export type AnchorZone = 'HG' | 'HD' | 'BG' | 'BD' | 'BAS';
 export type Gender = 'male' | 'female';
@@ -46,6 +46,16 @@ export interface Guild {
   emblem: GuildEmblem;
   recrutement: RecruitState;
   niveau_guilde: number;
+  tags: string[];
+}
+
+/** Alliance — calquée sur la guilde mais avec un acronyme `[ABC]` au lieu d'un niveau. */
+export interface Alliance {
+  nom: string;
+  /** Acronyme affiché entre crochets (ex. « ABC »). */
+  acronyme: string;
+  emblem: GuildEmblem;
+  recrutement: RecruitState;
   tags: string[];
 }
 
@@ -98,6 +108,7 @@ export interface Profile {
   /** Dofus suivis, dans l'ordre d'affichage. L'appartenance à cette liste = « inclus ». */
   ordre: DofusId[];
   guild: Guild;
+  alliance: Alliance;
   perso: Character;
   generique: GenericMessage;
 }

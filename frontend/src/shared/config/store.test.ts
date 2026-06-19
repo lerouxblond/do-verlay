@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { Profile } from '../types';
 import { createEmptyProfile } from './profile';
-import { fromExport, toExport } from './store';
+import { fromExport, normalizeProfile, toExport } from './store';
 
 describe('export / import de profil', () => {
   it('fait un aller-retour sans perte', () => {
@@ -16,5 +17,30 @@ describe('export / import de profil', () => {
     expect(fromExport(null)).toBeNull();
     expect(fromExport({})).toBeNull();
     expect(fromExport({ app: 'autre', profile: {} })).toBeNull();
+  });
+});
+
+describe('normalizeProfile (migration)', () => {
+  it("complète un ancien profil dépourvu d'alliance", () => {
+    const legacy = createEmptyProfile();
+    delete (legacy as Partial<Profile>).alliance;
+    delete (legacy.modules as Partial<Profile['modules']>).alliance;
+
+    const norm = normalizeProfile(legacy as Profile);
+
+    expect(norm.alliance).toBeDefined();
+    expect(norm.alliance.acronyme).toBe('');
+    expect(norm.alliance.emblem.back).toBe(1);
+    expect(norm.modules.alliance).toBeDefined();
+    expect(norm.modules.alliance.type).toBe('alliance');
+  });
+
+  it('conserve les valeurs existantes', () => {
+    const p = createEmptyProfile();
+    p.guild.nom = 'Les Bateleurs';
+    p.alliance.acronyme = 'CFR';
+    const norm = normalizeProfile(p);
+    expect(norm.guild.nom).toBe('Les Bateleurs');
+    expect(norm.alliance.acronyme).toBe('CFR');
   });
 });

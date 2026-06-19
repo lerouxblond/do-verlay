@@ -49,6 +49,20 @@ describe('useOverlayEngine', () => {
     expect(result.current.queue).toContain('fiche');
   });
 
+  it('déclenche guilde et alliance indépendamment (commandes séparées)', () => {
+    const { result } = renderHook(() => useOverlayEngine(profile(4)));
+    act(() => {
+      result.current.trigger('alliance');
+    });
+    expect(result.current.isVisible('alliance')).toBe(true);
+    expect(result.current.isVisible('etendard')).toBe(false);
+    act(() => {
+      result.current.trigger('etendard');
+    });
+    expect(result.current.isVisible('etendard')).toBe(true);
+    expect(result.current.isVisible('alliance')).toBe(true);
+  });
+
   it('épingle un module qui reste affiché', () => {
     const { result } = renderHook(() => useOverlayEngine(profile()));
     act(() => {

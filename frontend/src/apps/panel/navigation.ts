@@ -3,7 +3,7 @@
  * Les sections « module » sont dérivées des métadonnées partagées (MODULES) ; celles dont
  * le module n'est pas encore implémenté sont marquées « soon ».
  */
-import { MODULE_ORDER, MODULES } from '@shared/constants';
+import { EMBEDDED_NAV_MODULES, MODULE_ORDER, MODULES } from '@shared/constants';
 import type { ModuleType } from '@shared/types';
 import type { Suit } from '@shared/theme/tokens';
 import { READY_MODULES } from './modules/registry';
@@ -27,7 +27,9 @@ export interface SectionGroup {
   sections: PanelSection[];
 }
 
-const moduleSections: PanelSection[] = MODULE_ORDER.map((type) => ({
+const moduleSections: PanelSection[] = MODULE_ORDER.filter(
+  (type) => !EMBEDDED_NAV_MODULES.includes(type),
+).map((type) => ({
   id: type,
   label: MODULES[type].name,
   sub: MODULES[type].sub,

@@ -29,14 +29,13 @@ export const fondStyle = (url: string, color: string): CSSProperties => ({
   backgroundColor: color,
 });
 
-/** Asset d'origine multiplié par-dessus → conserve l'ombrage et le contour sur le remplissage. */
+/** Contour (asset séparé) dessiné tel quel par-dessus le fond — non teinté par la couleur du fond. */
 export const contourStyle: CSSProperties = {
   position: 'absolute',
   inset: 0,
   width: '100%',
   height: '100%',
   objectFit: 'contain',
-  mixBlendMode: 'multiply',
 };
 
 /** Symbole coloré, centré dans l'écusson. */

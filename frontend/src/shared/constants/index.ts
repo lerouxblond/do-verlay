@@ -67,6 +67,12 @@ export const MODULES: Record<
     sub: 'Identité & recrutement',
     command: '!guilde',
   },
+  alliance: {
+    suit: 'trefle',
+    name: 'Alliance',
+    sub: 'Identité & recrutement',
+    command: '!alliance',
+  },
   fiche: { suit: 'pique', name: 'Fiche perso', sub: "Carte d'identité", command: '!perso' },
   generique: {
     suit: 'coeur',
@@ -76,12 +82,25 @@ export const MODULES: Record<
   },
 };
 
-export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'fiche', 'generique'];
+export const MODULE_ORDER: ModuleType[] = [
+  'dofusdex',
+  'etendard',
+  'alliance',
+  'fiche',
+  'generique',
+];
+
+/**
+ * Modules pilotés par le moteur (commande, rotation) mais configurés DANS la page d'un autre
+ * module — donc sans entrée de navigation propre. L'alliance se règle sur la page Étendard.
+ */
+export const EMBEDDED_NAV_MODULES: ModuleType[] = ['alliance'];
 
 /** Commande chat → type de module. */
 export const COMMAND_MAP: Record<string, ModuleType> = {
   '!dofus': 'dofusdex',
   '!guilde': 'etendard',
+  '!alliance': 'alliance',
   '!perso': 'fiche',
   '!code': 'generique',
 };

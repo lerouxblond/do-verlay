@@ -40,6 +40,7 @@ export interface OverlayEngine {
 const emptyCooldown = (): Record<ModuleType, number> => ({
   dofusdex: 0,
   etendard: 0,
+  alliance: 0,
   fiche: 0,
   generique: 0,
 });

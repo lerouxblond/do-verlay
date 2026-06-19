@@ -5,7 +5,7 @@
  * - type inconnu → retour à l'accueil.
  */
 import { Navigate, useParams } from 'react-router-dom';
-import { MODULE_ORDER } from '@shared/constants';
+import { EMBEDDED_NAV_MODULES, MODULE_ORDER } from '@shared/constants';
 import type { ModuleType } from '@shared/types';
 import { Placeholder } from '../components/Placeholder/Placeholder';
 import { PANEL_MODULE_VIEWS } from '../modules/registry';
@@ -17,6 +17,8 @@ const isModuleType = (t: string | undefined): t is ModuleType =>
 export function ModuleRoute() {
   const { type } = useParams();
   if (!isModuleType(type)) return <Navigate to={DEFAULT_PATH} replace />;
+  // Modules configurés dans la page d'un autre module (ex. alliance → Étendard) : pas de page propre.
+  if (EMBEDDED_NAV_MODULES.includes(type)) return <Navigate to="/panel/modules/etendard" replace />;
   const View = PANEL_MODULE_VIEWS[type];
   return View ? <View /> : <Placeholder module={type} />;
 }

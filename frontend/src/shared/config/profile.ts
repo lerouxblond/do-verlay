@@ -31,6 +31,7 @@ const defaultModule = (
 const defaultModules = (): Profile['modules'] => ({
   dofusdex: defaultModule('dofusdex', 'HD', true),
   etendard: defaultModule('etendard', 'BG', true),
+  alliance: defaultModule('alliance', 'BD', false),
   fiche: defaultModule('fiche', 'BD', false),
   generique: defaultModule('generique', 'BAS', false),
 });
@@ -55,6 +56,13 @@ export const createEmptyProfile = (id = 'profil-1'): Profile => ({
     emblem: { back: 1, up: 1, fond_couleur: '#C9363A', symbole_couleur: '#E8C877' },
     recrutement: 'closed',
     niveau_guilde: 1,
+    tags: [],
+  },
+  alliance: {
+    nom: '',
+    acronyme: '',
+    emblem: { back: 1, up: 1, fond_couleur: '#C9363A', symbole_couleur: '#E8C877' },
+    recrutement: 'closed',
     tags: [],
   },
   perso: { nom: '', serveur: '', niveau: 1, pts_succes: 0, genre: 'male', classe: '' },

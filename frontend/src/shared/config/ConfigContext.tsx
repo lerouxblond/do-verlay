@@ -33,7 +33,7 @@ type SyncMessage =
   | { type: 'state'; state: PersistedState }
   | { type: 'intent'; intent: DisplayIntent };
 
-interface ConfigValue {
+export interface ConfigValue {
   profiles: Profile[];
   activeId: string;
   profile: Profile;
@@ -54,6 +54,10 @@ interface ConfigValue {
 }
 
 const ConfigCtx = createContext<ConfigValue | null>(null);
+
+/** Fenêtre de coalescence persist/diffusion : assez courte pour rester « live », assez large
+ *  pour absorber une rafale de frappes ou un glisser-déposer. */
+const SYNC_DEBOUNCE_MS = 180;
 
 const wsUrl = (): string | null => {
   if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return null;
@@ -145,20 +149,42 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     };
   }, [handleMessage, publish]);
 
-  const broadcast = useCallback((msg: SyncMessage) => {
-    channelRef.current?.postMessage(msg);
+  const broadcast = useCallback((msg: SyncMessage, serializedState?: string) => {
+    channelRef.current?.postMessage(msg); // BroadcastChannel = structured clone (pas de JSON)
     const ws = wsRef.current;
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      // Réutilise le JSON de l'état déjà calculé pour éviter une 2ᵉ sérialisation du payload.
+      const wire =
+        msg.type === 'state' && serializedState
+          ? `{"type":"state","state":${serializedState}}`
+          : JSON.stringify(msg);
+      ws.send(wire);
+    }
   }, []);
 
-  // Persiste toujours ; ne diffuse que si `publish` et que l'état a réellement changé.
+  // Persiste + diffuse, DÉBOUNCÉ : coalesce les rafales (frappe, glisser-déposer) en une seule
+  // passe, avec UNE seule sérialisation réutilisée pour localStorage et le WebSocket. Un flush sur
+  // `pagehide` garantit l'écriture si l'onglet se ferme avant l'échéance.
   useEffect(() => {
-    saveState(state);
-    if (!publish) return;
-    const json = JSON.stringify(state);
-    if (json === lastSync.current) return; // déjà synchronisé (reçu ou émis)
-    lastSync.current = json;
-    broadcast({ type: 'state', state });
+    const flush = () => {
+      const s = stateRef.current;
+      const json = JSON.stringify(s);
+      saveState(s, json);
+      if (!publish) return;
+      if (json === lastSync.current) return; // déjà synchronisé (reçu ou émis)
+      lastSync.current = json;
+      broadcast({ type: 'state', state: s }, json);
+    };
+    const id = window.setTimeout(flush, SYNC_DEBOUNCE_MS);
+    const onHide = () => {
+      window.clearTimeout(id);
+      flush();
+    };
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('pagehide', onHide);
+    };
   }, [state, publish, broadcast]);
 
   const profile = useMemo(

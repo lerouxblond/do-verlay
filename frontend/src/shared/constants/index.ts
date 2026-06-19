@@ -107,3 +107,10 @@ export const COMMAND_MAP: Record<string, ModuleType> = {
 
 export const STORAGE_KEY = 'do-verlay:profiles';
 export const BROADCAST_CHANNEL = 'do-verlay';
+
+/**
+ * Mention légale — DOFUS et les illustrations associées sont la propriété d'Ankama Studio.
+ * Affichée sur la landing et dans le panel ; source unique pour rester cohérent.
+ */
+export const LEGAL_NOTICE =
+  "Site non officiel. DOFUS ainsi que certaines illustrations sont la propriété d'Ankama Studio — tous droits réservés.";

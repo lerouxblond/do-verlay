@@ -1,7 +1,11 @@
 /** Persistance locale des profils (localStorage) + (dé)sérialisation. */
 import { STORAGE_KEY } from '../constants';
-import type { ModuleType, Profile, ProfileExport } from '../types';
+import { DOFUS_LIST } from '../data/dofus';
+import type { DofusState, ModuleType, Profile, ProfileExport } from '../types';
 import { cloneProfile, createEmptyProfile } from './profile';
+
+/** Ids de Dofus du référentiel — pour purger un import contenant des ids inconnus. */
+const VALID_DOFUS = new Set(DOFUS_LIST.map((d) => d.id));
 
 export interface PersistedState {
   profiles: Profile[];
@@ -19,10 +23,24 @@ export function normalizeProfile(raw: Profile): Profile {
   for (const type of Object.keys(base.modules) as ModuleType[]) {
     if (raw.modules?.[type]) modules[type] = { ...base.modules[type], ...raw.modules[type] };
   }
+
+  // Purge les ids de Dofus inconnus (import d'un fichier altéré / d'une autre version) et
+  // dédoublonne l'ordre ; conserve tous les états valides du référentiel.
+  const ordre: string[] = [];
+  for (const id of raw.ordre ?? base.ordre) {
+    if (VALID_DOFUS.has(id) && !ordre.includes(id)) ordre.push(id);
+  }
+  const dofus = { ...base.dofus };
+  for (const [id, etat] of Object.entries(raw.dofus ?? {})) {
+    if (VALID_DOFUS.has(id)) dofus[id] = etat as DofusState;
+  }
+
   return {
     ...base,
     ...raw,
     modules,
+    ordre,
+    dofus,
     guild: { ...base.guild, ...raw.guild, emblem: { ...base.guild.emblem, ...raw.guild?.emblem } },
     alliance: {
       ...base.alliance,
@@ -48,9 +66,13 @@ export function loadState(): PersistedState {
   return { profiles: [profile], activeId: profile.id };
 }
 
-export function saveState(state: PersistedState): void {
+/**
+ * Persiste l'état. `serialized` permet de réutiliser un `JSON.stringify` déjà calculé ailleurs
+ * (le ConfigProvider sérialise une seule fois pour le diff, la persistance ET le WebSocket).
+ */
+export function saveState(state: PersistedState, serialized?: string): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, serialized ?? JSON.stringify(state));
   } catch {
     /* quota / mode privé : on ignore */
   }

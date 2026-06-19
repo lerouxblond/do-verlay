@@ -15,6 +15,7 @@ export const asideStyle: CSSProperties = {
 };
 
 export const brandStyle: CSSProperties = {
+  display: 'block',
   padding: '22px 20px 18px',
   borderBottom: `1px solid ${colors.border}`,
 };
@@ -54,7 +55,11 @@ export const groupLabelStyle: CSSProperties = {
   padding: '0 10px 7px',
 };
 
-export const itemStyle = (active: boolean): CSSProperties => ({
+/**
+ * Disposition d'un item de navigation. Les états visuels (hover, actif, halo de l'enseigne) sont
+ * portés par les classes `.dv-nav-item` / `.is-active` (fonts.css) : l'inline ne gère pas `:hover`.
+ */
+export const itemStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 11,
@@ -63,12 +68,7 @@ export const itemStyle = (active: boolean): CSSProperties => ({
   padding: '9px 10px',
   border: 'none',
   borderRadius: radii.md,
-  cursor: 'pointer',
-  background: active ? 'rgba(201,54,58,0.16)' : 'transparent',
-  boxShadow: active ? 'inset 0 0 0 1px rgba(212,168,67,0.4)' : 'none',
-  color: active ? colors.text : colors.textMuted,
-  transition: 'background 0.14s ease, color 0.14s ease',
-});
+};
 
 export const itemLabelStyle: CSSProperties = {
   fontFamily: fonts.body,
@@ -87,4 +87,30 @@ export const soonStyle: CSSProperties = {
   border: `1px solid ${colors.border}`,
   borderRadius: radii.pill,
   padding: '2px 7px',
+};
+
+export const brandHintStyle: CSSProperties = {
+  fontFamily: fonts.label,
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  fontSize: 9,
+  fontWeight: 700,
+  color: colors.textFaint,
+  marginTop: 6,
+};
+
+/** Pied de la sidebar : poussé en bas (mention légale). */
+export const footStyle: CSSProperties = {
+  marginTop: 'auto',
+  padding: '14px 18px 18px',
+  borderTop: `1px solid ${colors.border}`,
+};
+
+export const legalStyle: CSSProperties = {
+  fontFamily: fonts.label,
+  fontSize: 10,
+  lineHeight: 1.5,
+  letterSpacing: '0.02em',
+  color: colors.textFaint,
+  margin: 0,
 };

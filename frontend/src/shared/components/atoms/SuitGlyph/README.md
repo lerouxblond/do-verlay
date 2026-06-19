@@ -9,6 +9,7 @@ cadres, en puce, séparateur ou pastille.
 | `size`  | `number`                                   | `18`               | Taille de police (px)         |
 | `color` | `string`                                   | couleur du token   | Surcharge de couleur          |
 | `style` | `CSSProperties`                            | —                  | Style additionnel             |
+| `className` | `string`                               | —                  | Accroche CSS (états : halo, hover…) |
 
 Couleurs par défaut (design system) : ♦ or `#D4A843` · ♣ vert `#4CAF50` · ♠ argent `#9A8A84` ·
 ♥ rouge `#C9363A`. Mapping enseigne → module dans `theme/tokens.ts` (`suits`).

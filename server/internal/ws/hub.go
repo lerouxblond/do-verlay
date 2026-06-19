@@ -13,14 +13,39 @@ package ws
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
+// maxMessageBytes borne la taille d'un message entrant (la config d'un profil est petite ;
+// 1 Mio laisse une marge confortable et évite qu'un client envoie un payload abusif).
+const maxMessageBytes = 1 << 20
+
 var upgrader = websocket.Upgrader{
-	// Dev : on accepte toute origine (le navigateur d'OBS n'envoie pas d'Origin fiable).
-	CheckOrigin: func(*http.Request) bool { return true },
+	CheckOrigin: checkOrigin,
+}
+
+// checkOrigin n'autorise que les origines locales. Une page web malveillante ouverte dans le
+// navigateur du streamer enverrait un Origin cross-site (toujours présent sur un handshake
+// navigateur) → rejet : elle ne peut ni lire la config relayée ni injecter d'état sur l'overlay.
+// Origin vide = client non-navigateur (OBS natif, tests) → pas de vecteur cross-site, autorisé.
+func checkOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	switch u.Hostname() {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	default:
+		return false
+	}
 }
 
 // Hub garde la liste des clients connectés et le dernier état publié.
@@ -45,6 +70,7 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	conn.SetReadLimit(maxMessageBytes)
 	c := &client{conn: conn, out: make(chan []byte, 16)}
 
 	h.mu.Lock()

@@ -13,15 +13,20 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"do-verlay/server/internal/ws"
 )
 
 func main() {
 	port := env("PORT", "8787")
+	// Par défaut on n'écoute que sur la boucle locale (OBS tourne sur la même machine) : pas
+	// d'exposition au réseau. Mettre HOST=0.0.0.0 pour un setup multi-PC, en connaissance de cause.
+	host := env("HOST", "127.0.0.1")
 	staticDir := env("STATIC_DIR", "../frontend/dist")
 
 	hub := ws.NewHub()
@@ -30,9 +35,17 @@ func main() {
 	mux.HandleFunc("/ws", hub.ServeWS)
 	mux.Handle("/", spaHandler(staticDir))
 
-	addr := ":" + port
-	log.Printf("chapiteau api — http://localhost%s  (overlay OBS : /#/overlay · ws : /ws)", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	addr := net.JoinHostPort(host, port)
+	// ReadHeaderTimeout protège le handshake (slowloris) sans tuer les WebSocket (longue durée) ;
+	// pas de ReadTimeout/WriteTimeout globaux qui couperaient les connexions /ws persistantes.
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	log.Printf("chapiteau api — http://%s  (overlay OBS : /#/overlay · ws : /ws)", addr)
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

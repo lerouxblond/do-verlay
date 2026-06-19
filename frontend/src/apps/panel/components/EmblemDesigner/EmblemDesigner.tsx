@@ -94,7 +94,9 @@ export function EmblemDesigner({ emblem, variant, onChange }: EmblemDesignerProp
                 >
                   <div style={formeThumb}>
                     <div style={formeFond(fondUrl(id), fond)} />
-                    {contour && <img src={contour} alt="" style={formeContour} />}
+                    {contour && (
+                      <img src={contour} alt="" style={formeContour} loading="lazy" decoding="async" />
+                    )}
                   </div>
                 </button>
               );

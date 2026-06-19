@@ -7,12 +7,20 @@
  * La liste des Dofus suivis est défilable et réordonnable au glisser-déposer : les Dofus
  * SLIDENT en direct vers leur nouvelle place (déplacement) avec une animation FLIP.
  */
-import { useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type KeyboardEvent,
+} from 'react';
 import { Button } from '@shared/components/atoms/Button/Button';
 import { DofusIcon } from '@shared/components/atoms/DofusIcon/DofusIcon';
 import { ProgressBar } from '@shared/components/atoms/ProgressBar/ProgressBar';
 import { useConfig } from '@shared/config/ConfigContext';
 import { DOFUS_BY_ID, DOFUS_LIST } from '@shared/data/dofus';
+import { moveAdjacent } from '@shared/lib/reorder';
 import { colors, fonts, lattice, radii } from '@shared/theme/tokens';
 import type { DofusState, ModuleLayout } from '@shared/types';
 import { DofusdexModule } from '@overlay/modules/DofusdexModule/DofusdexModule';
@@ -71,10 +79,11 @@ const rowStyle = (dragging: boolean): CSSProperties => ({
   borderRadius: radii.md,
   border: `1px solid ${dragging ? colors.accent : colors.border}`,
   background: dragging ? colors.surfaceAlt : colors.bg,
-  opacity: dragging ? 0.6 : 1,
+  opacity: dragging ? 0.55 : 1,
   boxShadow: dragging ? '0 10px 24px rgba(0,0,0,0.5)' : 'none',
   position: 'relative',
   zIndex: dragging ? 2 : 1,
+  cursor: dragging ? 'grabbing' : 'default',
 });
 
 const gripStyle: CSSProperties = {
@@ -161,24 +170,40 @@ export function DofusdexView() {
   const dragIdRef = useRef<string | null>(null);
   dragIdRef.current = dragId;
   const lastOver = useRef<string | null>(null);
+  // Ordre de travail LOCAL pendant le glisser : le slide FLIP est piloté par cet état (pas de
+  // sync à chaque survol). L'ordre n'est commité au profil qu'UNE fois, au relâchement.
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+  const dragOrderRef = useRef<string[] | null>(null);
+  dragOrderRef.current = dragOrder;
+  // Ordre affiché : la copie de travail pendant le glisser, sinon l'ordre persisté.
+  const displayOrder = dragOrder ?? suivis;
 
   // FLIP : anime le glissement des lignes vers leur nouvelle position (sauf celle saisie,
   // suivie par le fantôme natif du drag).
   const rowEls = useRef(new Map<string, HTMLElement>());
   const prevRects = useRef(new Map<string, DOMRect>());
   useLayoutEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     rowEls.current.forEach((el, id) => {
       const next = el.getBoundingClientRect();
       const prev = prevRects.current.get(id);
       prevRects.current.set(id, next);
       if (!prev || id === dragIdRef.current) return;
       const dy = prev.top - next.top;
-      if (!dy) return;
+      if (!dy || reduceMotion) return;
+      // FLIP : on inverse instantanément le déplacement (transform GPU only), puis on relâche
+      // vers 0 avec la courbe signature → glissement fluide, sans relayout.
       el.style.transition = 'none';
       el.style.transform = `translateY(${dy}px)`;
+      el.style.willChange = 'transform';
       requestAnimationFrame(() => {
-        el.style.transition = 'transform 180ms ease';
+        el.style.transition = 'transform 200ms cubic-bezier(0.2,0.8,0.25,1)';
         el.style.transform = '';
+        const clear = () => {
+          el.style.willChange = '';
+          el.removeEventListener('transitionend', clear);
+        };
+        el.addEventListener('transitionend', clear);
       });
     });
   });
@@ -218,27 +243,50 @@ export function DofusdexView() {
       if (pre.objectif !== undefined) p.dofusdex_objectif = pre.objectif;
     });
 
-  /** Déplace (slide) le Dofus saisi vers la position de la cible. */
+  /** Déplace (slide) le Dofus saisi vers la position de la cible — sur la copie de travail locale. */
   const moveTo = (targetId: string) => {
     const did = dragIdRef.current;
-    if (!did || did === targetId) return;
+    const base = dragOrderRef.current;
+    if (!did || !base) return;
+    const next = moveAdjacent(base, did, targetId);
+    if (next === base) return; // aucun changement
+    dragOrderRef.current = next;
+    setDragOrder(next); // déclenche le FLIP, sans toucher au profil
+  };
+
+  /** Réordonnancement CLAVIER (poignée focalisée) : remonte/descend le Dofus d'un cran. */
+  const nudge = (id: string, dir: -1 | 1) =>
     updateProfile((p) => {
-      const from = p.ordre.indexOf(did);
-      const to = p.ordre.indexOf(targetId);
-      if (from < 0 || to < 0 || from === to) return;
-      const arr = p.ordre.filter((x) => x !== did);
-      const idx = arr.indexOf(targetId);
-      arr.splice(from < to ? idx + 1 : idx, 0, did);
-      p.ordre = arr;
+      const i = p.ordre.indexOf(id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= p.ordre.length) return;
+      [p.ordre[i], p.ordre[j]] = [p.ordre[j], p.ordre[i]];
     });
+
+  const onGripKey = (id: string) => (e: KeyboardEvent) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nudge(id, -1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nudge(id, 1);
+    }
   };
 
   const onDragStart = (id: string) => (e: DragEvent) => {
     dragIdRef.current = id;
     setDragId(id);
     lastOver.current = id;
+    dragOrderRef.current = [...profile.ordre];
+    setDragOrder(dragOrderRef.current);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', id); // requis par Firefox
+    // Fantôme = la LIGNE entière (et pas le seul grip ⠿) → on « tient » vraiment le Dofus.
+    const el = rowEls.current.get(id);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      e.dataTransfer.setDragImage(el, e.clientX - r.left, e.clientY - r.top);
+    }
   };
   const onDragEnter = (id: string) => () => {
     if (!dragIdRef.current || id === dragIdRef.current || lastOver.current === id) return;
@@ -250,6 +298,15 @@ export function DofusdexView() {
     e.dataTransfer.dropEffect = 'move';
   };
   const endDrag = () => {
+    // Commit UNIQUE de l'ordre au relâchement (→ une seule sync débouncée, plus de spam au survol).
+    const order = dragOrderRef.current;
+    if (order) {
+      updateProfile((p) => {
+        p.ordre = order;
+      });
+    }
+    setDragOrder(null);
+    dragOrderRef.current = null;
     setDragId(null);
     dragIdRef.current = null;
     lastOver.current = null;
@@ -347,7 +404,7 @@ export function DofusdexView() {
             </div>
 
             <div style={scrollStyle} className="dv-scroll">
-              {suivis.map((id) => {
+              {displayOrder.map((id) => {
                 const dofus = DOFUS_BY_ID[id];
                 if (!dofus) return null;
                 const state = profile.dofus[id] ?? 'not_started';
@@ -365,11 +422,15 @@ export function DofusdexView() {
                   >
                     <span
                       style={gripStyle}
+                      className="dv-grip"
                       draggable
+                      role="button"
+                      tabIndex={0}
                       onDragStart={onDragStart(id)}
                       onDragEnd={endDrag}
-                      aria-label="Glisser pour déplacer"
-                      title="Glisser pour déplacer"
+                      onKeyDown={onGripKey(id)}
+                      aria-label={`Déplacer ${dofus.nom} — glisser, ou flèches haut/bas`}
+                      title="Glisser, ou flèches haut/bas pour déplacer"
                     >
                       ⠿
                     </span>

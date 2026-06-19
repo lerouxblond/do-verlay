@@ -9,6 +9,12 @@ import react from '@vitejs/plugin-react';
 //  - panel      : …/#/panel/general
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Les emblèmes guilde/alliance (~550 fichiers, beaucoup < 4 Ko) seraient inlinés en base64
+    // par défaut → +500 Ko de JS chargés même sans ouvrir l'Étendard. On force leur émission en
+    // fichiers (chargés à la demande par le navigateur, cacheables). Le reste garde le défaut.
+    assetsInlineLimit: (filePath) => (filePath.includes('guild_alliance') ? false : undefined),
+  },
   resolve: {
     alias: {
       '@shared': resolve(__dirname, 'src/shared'),

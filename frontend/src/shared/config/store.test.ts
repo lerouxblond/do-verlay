@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Profile } from '../types';
+import type { DofusState, Profile } from '../types';
 import { createEmptyProfile } from './profile';
 import { fromExport, normalizeProfile, toExport } from './store';
 
@@ -42,5 +42,14 @@ describe('normalizeProfile (migration)', () => {
     const norm = normalizeProfile(p);
     expect(norm.guild.nom).toBe('Les Bateleurs');
     expect(norm.alliance.acronyme).toBe('CFR');
+  });
+
+  it('purge les ids de Dofus inconnus (import altéré)', () => {
+    const p = createEmptyProfile();
+    (p.ordre as string[]).push('dof-bidon');
+    (p.dofus as Record<string, DofusState>)['dof-bidon'] = 'complete';
+    const norm = normalizeProfile(p);
+    expect(norm.ordre).not.toContain('dof-bidon');
+    expect(norm.dofus['dof-bidon']).toBeUndefined();
   });
 });

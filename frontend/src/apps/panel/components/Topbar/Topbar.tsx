@@ -26,7 +26,13 @@ export function Topbar() {
         ))}
       </select>
       <div style={spacerStyle} />
-      <a style={linkStyle} href="#/overlay" target="_blank" rel="noreferrer">
+      <a
+        style={linkStyle}
+        className="dv-topbar-link"
+        href="#/overlay"
+        target="_blank"
+        rel="noreferrer"
+      >
         ▶ Ouvrir l'overlay
       </a>
     </header>

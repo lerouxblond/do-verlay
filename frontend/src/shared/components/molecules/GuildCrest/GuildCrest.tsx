@@ -28,7 +28,7 @@ export function EmblemCrest({ emblem, variant = 'guild', size = 64 }: EmblemCres
   return (
     <div style={crestStyle(size)}>
       {fond && <div style={fondStyle(fond, fondColor)} />}
-      {contour && <img src={contour} alt="" style={contourStyle} />}
+      {contour && <img src={contour} alt="" style={contourStyle} loading="lazy" decoding="async" />}
       {symbole && <div style={symbolStyle(symbole, symColor)} />}
     </div>
   );

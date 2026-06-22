@@ -1,17 +1,17 @@
 // Command api — backend « Chapiteau / Do-verlay ».
 //
-// Périmètre actuel (test d'intégration OBS) : sert le front compilé (frontend/dist) ET
-// expose un canal WebSocket /ws qui synchronise la config en direct entre le panel et
-// l'overlay — y compris quand l'overlay tourne dans le navigateur intégré d'OBS (process
-// distinct, donc hors de portée de BroadcastChannel/localStorage du navigateur du streamer).
+// Périmètre actuel : sert le front compilé (frontend/dist) ET expose :
+//   - /ws   : canal WebSocket qui synchronise la config panel ↔ overlay (même machine, cross-process)
+//   - /api/config : GET/PUT du PersistedState complet (persistance serveur via PostgreSQL si dispo)
 //
-// Un seul port sert les deux → OBS charge http://localhost:8787/#/overlay et le /ws est
-// de même origine (ws://localhost:8787/ws), sans config réseau.
+// La connexion PostgreSQL est optionnelle : si DATABASE_URL est absent ou la DB inaccessible,
+// le serveur démarre en mode mémoire (comportement identique à avant, sans persistance).
 //
-// TODO (différé, cf. dossier étape 10) : PostgreSQL + REST CRUD + IRC Twitch.
+// TODO (différé) : PostgreSQL REST CRUD profils/modules + IRC Twitch.
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -19,6 +19,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"do-verlay/server/internal/db"
+	"do-verlay/server/internal/handlers"
+	"do-verlay/server/internal/middleware"
+	"do-verlay/server/internal/repository"
 	"do-verlay/server/internal/ws"
 )
 
@@ -29,10 +33,68 @@ func main() {
 	host := env("HOST", "127.0.0.1")
 	staticDir := env("STATIC_DIR", "../frontend/dist")
 
+	ctx := context.Background()
+
+	// Connexion DB optionnelle — le serveur fonctionne sans.
+	pool, err := db.Connect(ctx)
+	if err != nil {
+		log.Printf("DB indisponible, démarrage sans persistance : %v", err)
+	} else if pool != nil {
+		defer pool.Close()
+		log.Printf("DB connectée")
+	}
+
 	hub := ws.NewHub()
+
+	if pool != nil {
+		// Réhydrate le hub avec le dernier état sauvegardé (overlay OBS reconnecte immédiatement).
+		if state, err := repository.GetConfig(ctx, pool); err != nil {
+			log.Printf("chargement config DB : %v", err)
+		} else if state != nil {
+			hub.SetLastState(state)
+			log.Printf("état config restauré depuis DB")
+		}
+		// Persiste chaque nouveau state message reçu du panel.
+		hub.PersistFn = func(state []byte) {
+			if err := repository.UpsertConfig(context.Background(), pool, state); err != nil {
+				log.Printf("persist config : %v", err)
+			}
+		}
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", hub.ServeWS)
+
+	if pool != nil {
+		cfg := &handlers.ConfigHandler{Pool: pool}
+		mux.HandleFunc("/api/config", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				cfg.Get(w, r)
+			case http.MethodPut:
+				cfg.Put(w, r)
+			default:
+				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+	}
+
+	// OAuth Twitch — endpoints disponibles si TWITCH_CLIENT_ID est configuré.
+	mux.HandleFunc("/api/auth/token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		handlers.TwitchToken(w, r)
+	})
+	mux.HandleFunc("/api/auth/revoke", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		handlers.TwitchRevoke(w, r)
+	})
+
 	mux.Handle("/", spaHandler(staticDir))
 
 	addr := net.JoinHostPort(host, port)
@@ -40,7 +102,7 @@ func main() {
 	// pas de ReadTimeout/WriteTimeout globaux qui couperaient les connexions /ws persistantes.
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           secureHeaders(mux),
+		Handler:           middleware.Chain(secureHeaders(mux), middleware.Recovery, middleware.Logger),
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
@@ -76,11 +138,14 @@ func env(key, def string) string {
 // Content-Security-Policy : scripts uniquement depuis 'self' (build Vite bundlé) ;
 // styles 'unsafe-inline' pour les inline styles React ; WebSocket autorisé vers localhost.
 func secureHeaders(next http.Handler) http.Handler {
+	// connect-src inclut Twitch (OAuth token exchange + helix/users + IRC WebSocket)
+	// et localhost pour le WebSocket overlay.
 	const csp = "default-src 'self'; " +
 		"style-src 'self' 'unsafe-inline'; " +
 		"font-src 'self'; " +
 		"img-src 'self' data: blob:; " +
-		"connect-src 'self' ws://localhost:* ws://127.0.0.1:*; " +
+		"connect-src 'self' ws://localhost:* ws://127.0.0.1:* " +
+		"https://id.twitch.tv https://api.twitch.tv wss://irc-ws.chat.twitch.tv; " +
 		"frame-ancestors 'none';"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

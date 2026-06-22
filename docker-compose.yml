@@ -13,8 +13,10 @@ services:
       - '127.0.0.1:5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
-      # Applique le schéma initial au premier démarrage.
+      # Les migrations sont jouées par ordre alphabétique au premier démarrage du volume.
+      # Si le volume db-data existe déjà, appliquer manuellement : psql < server/migrations/0002_config_snapshot.sql
       - ./server/migrations/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
+      - ./server/migrations/0002_config_snapshot.sql:/docker-entrypoint-initdb.d/0002_config_snapshot.sql:ro
 
 volumes:
   db-data:

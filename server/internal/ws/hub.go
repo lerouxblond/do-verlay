@@ -53,10 +53,20 @@ type Hub struct {
 	mu        sync.Mutex
 	clients   map[*client]struct{}
 	lastState []byte // dernier message {"type":"state",...} pour réhydrater un nouveau client
+	// PersistFn est appelée dans une goroutine à chaque mise à jour du lastState.
+	// Nil = mode sans base (le serveur fonctionne normalement, sans persistance disque).
+	PersistFn func(state []byte)
 }
 
 func NewHub() *Hub {
 	return &Hub{clients: make(map[*client]struct{})}
+}
+
+// SetLastState injecte un état initial (chargé depuis la DB au démarrage).
+func (h *Hub) SetLastState(state []byte) {
+	h.mu.Lock()
+	h.lastState = state
+	h.mu.Unlock()
 }
 
 type client struct {
@@ -117,18 +127,26 @@ func (h *Hub) relay(from *client, msg []byte) {
 	var head struct {
 		Type string `json:"type"`
 	}
-	if json.Unmarshal(msg, &head) == nil && head.Type == "state" {
-		h.mu.Lock()
-		h.lastState = msg
-		h.mu.Unlock()
-	}
+	isState := json.Unmarshal(msg, &head) == nil && head.Type == "state"
 
 	h.mu.Lock()
-	defer h.mu.Unlock()
+	if isState {
+		h.lastState = msg
+	}
+	fn := h.PersistFn
+	// Collecte des destinataires sous lock pour éviter les races sur h.clients.
+	targets := make([]*client, 0, len(h.clients))
 	for c := range h.clients {
-		if c == from {
-			continue
+		if c != from {
+			targets = append(targets, c)
 		}
+	}
+	h.mu.Unlock()
+
+	if isState && fn != nil {
+		go fn(msg)
+	}
+	for _, c := range targets {
 		c.trySend(msg)
 	}
 }

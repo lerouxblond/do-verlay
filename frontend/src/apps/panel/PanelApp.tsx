@@ -5,6 +5,7 @@
  * #/panel/general · #/panel/profils · #/panel/modules/dofusdex · #/panel/modules/:type.
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { useTwitchIRC } from '@shared/hooks/useTwitchIRC';
 import { PanelLayout } from './components/PanelLayout/PanelLayout';
 import { DispositionView } from './views/DispositionView';
 import { GeneralView } from './views/GeneralView';
@@ -12,6 +13,7 @@ import { ModuleRoute } from './views/ModuleRoute';
 import { ProfilesView } from './views/ProfilesView';
 
 export function PanelApp() {
+  useTwitchIRC();
   return (
     <Routes>
       <Route element={<PanelLayout />}>

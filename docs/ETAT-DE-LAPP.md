@@ -3,7 +3,8 @@
 Audit de ce qui est réellement implémenté, au 22 juin 2026 (maj : Alliance + refonte blason, puis
 landing « chapiteau », chrome panel, mention légale Ankama, polish Dofusdex, **free-display :
 dispositions libres + configs Dofusdex sauvegardables + mode test**, puis **lecture du chat Twitch :
-les commandes `!…` déclenchent les modules, IRC anonyme côté serveur**). À tenir à jour.
+les commandes `!…` déclenchent les modules, IRC anonyme côté serveur**, puis **module Fiche perso**
++ nettoyage du code mort). À tenir à jour.
 
 ## Pattern « module » (à reproduire pour les suivants)
 Un module = (1) **vue de config panel** dans `apps/panel/views/`, enregistrée dans
@@ -28,7 +29,8 @@ pour tout module rendu (`OVERLAY_MODULES`).
   | `/panel/modules/dofusdex` | Config Dofusdex | id. |
   | `/panel/modules/etendard` | Config Étendard (guilde **+** alliance) | id. |
   | `/panel/modules/alliance` | Redirige vers Étendard (config embarquée) | id. |
-  | `/panel/modules/:type` | Squelette « Bientôt » (fiche/generique) | id. |
+  | `/panel/modules/fiche` | Config Fiche perso | id. |
+  | `/panel/modules/:type` | Squelette « Bientôt » (generique) | id. |
   | `*` | redirige vers `/` | — |
 - **Garde d'auth = PLACEHOLDER** (`apps/panel/auth/`) : `useAuth` renvoie toujours
   `authenticated`. Seam pour la future auth Twitch — aucune vérif réelle.
@@ -108,6 +110,12 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   (états). Deux formats. Réutilisé comme aperçu dans le panel.
 - **Module Étendard (visuel overlay)** : `CardShell` trèfle + `GuildCrest` (blason + nom + niveau +
   pastille recrutement) + conditions (tags) si ouvert. Réutilisé comme aperçu.
+- **Module Fiche perso (config + visuel overlay)** : page `FicheView` (identité : nom, **classe** via
+  `CLASS_LABELS` + **genre** ; caractéristiques : serveur, niveau, points de succès) + réglages
+  communs (`ModuleSettingsCard`, commande `!perso`) + aperçu live. Visuel `FicheModule` : `CardShell`
+  pique + buste de classe genré (`Avatar` + `classCharacter`) + nom + icône/libellé de classe +
+  serveur · niveau · succès. Repli médaillon ♠ si aucune classe choisie. Actif par défaut. Test de
+  rendu Vitest. Assets de classe (19 icônes + bustes male/female) servis par `shared/assets/classes`.
 - **Polices auto-hébergées** (@fontsource, bundlées, même origine) → rendu fiable dans OBS (plus
   d'`@import` réseau).
 - **Landing (route `/`)** — hero « chapiteau » : projecteur + vignette sur fond losangé, titre or
@@ -137,8 +145,8 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   `OverlayApp`). Cooldown / file / limite gérés par `useOverlayEngine`.
 
 ## Différé / pas encore fait ⏳
-- **Modules Fiche perso / Générique** : sections « Bientôt » (placeholder). À brancher sur le même
-  pattern que Dofusdex / Étendard (registres panel + overlay + actif par défaut).
+- **Module Générique** : section « Bientôt » (placeholder). À brancher sur le même pattern que
+  Dofusdex / Étendard / Fiche perso (registres panel + overlay + actif par défaut).
 - **Persistance serveur** : le WebSocket ne fait que relayer (mémoire). Pas de PostgreSQL/REST/CRUD
   (migration `server/migrations/0001_init.sql` écrite mais non appliquée).
 - **Auth Twitch** : garde placeholder, pas d'OAuth réel.

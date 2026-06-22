@@ -32,7 +32,7 @@ const defaultModules = (): Profile['modules'] => ({
   dofusdex: defaultModule('dofusdex', 'HD', true),
   etendard: defaultModule('etendard', 'BG', true),
   alliance: defaultModule('alliance', 'BD', false),
-  fiche: defaultModule('fiche', 'BD', false),
+  fiche: defaultModule('fiche', 'BD', true),
   generique: defaultModule('generique', 'BAS', false),
 });
 

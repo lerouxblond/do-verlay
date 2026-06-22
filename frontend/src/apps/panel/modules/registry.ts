@@ -7,10 +7,12 @@ import type { ComponentType } from 'react';
 import type { ModuleType } from '@shared/types';
 import { DofusdexView } from '../views/DofusdexView';
 import { EtendardView } from '../views/EtendardView';
+import { FicheView } from '../views/FicheView';
 
 export const PANEL_MODULE_VIEWS: Partial<Record<ModuleType, ComponentType>> = {
   dofusdex: DofusdexView,
   etendard: EtendardView,
+  fiche: FicheView,
 };
 
 /** Modules dont la config est implémentée. */

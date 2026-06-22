@@ -21,7 +21,11 @@ await panel.setViewportSize({ width: 1440, height: 960 });
 
 // Épingle les modules implémentés depuis leurs pages de config (toggles role=switch).
 // Best-effort : si la structure change, on continue sans bloquer les captures.
-for (const route of ['/#/panel/modules/dofusdex', '/#/panel/modules/etendard']) {
+for (const route of [
+  '/#/panel/modules/dofusdex',
+  '/#/panel/modules/etendard',
+  '/#/panel/modules/fiche',
+]) {
   await panel.goto(`${BASE}${route}`, { waitUntil: 'networkidle' });
   await panel.waitForTimeout(500);
   const switches = panel.locator('button[role="switch"][aria-checked="false"]');
@@ -43,6 +47,7 @@ for (const [route, name] of [
   ['/#/panel/profils', 'panel-profils'],
   ['/#/panel/modules/dofusdex', 'panel-dofusdex'],
   ['/#/panel/modules/etendard', 'panel-etendard'],
+  ['/#/panel/modules/fiche', 'panel-fiche'],
 ]) {
   await panel.goto(`${BASE}${route}`, { waitUntil: 'networkidle' });
   await panel.waitForTimeout(700);

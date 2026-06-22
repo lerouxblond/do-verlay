@@ -38,6 +38,29 @@ export const CLASSES = [
   'zobal',
 ] as const;
 
+/** Libellés d'affichage des classes (clé d'asset → nom Dofus accentué). */
+export const CLASS_LABELS: Record<(typeof CLASSES)[number], string> = {
+  cra: 'Crâ',
+  ecaflip: 'Ecaflip',
+  eliotrope: 'Eliotrope',
+  eniripsa: 'Eniripsa',
+  enutrof: 'Enutrof',
+  feca: 'Féca',
+  forgelance: 'Forgelance',
+  huppermage: 'Huppermage',
+  iop: 'Iop',
+  osamodas: 'Osamodas',
+  ouginak: 'Ouginak',
+  pandawa: 'Pandawa',
+  roublard: 'Roublard',
+  sacrieur: 'Sacrieur',
+  sadida: 'Sadida',
+  sram: 'Sram',
+  steamer: 'Steamer',
+  xelor: 'Xélor',
+  zobal: 'Zobal',
+};
+
 export const MAX_TAGS = 5;
 export const MODULE_LIMIT = { min: 1, max: 4, default: 2 } as const;
 

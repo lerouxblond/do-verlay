@@ -5,7 +5,7 @@
 
 export type DofusState = 'not_started' | 'on_going' | 'complete';
 export type RecruitState = 'open' | 'on_request' | 'closed';
-export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'alliance';
+export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'alliance' | 'almanax';
 /**
  * Zones d'ancrage héritées (5 coins fixes). **Déprécié** : conservé uniquement pour migrer
  * les anciens profils vers les dispositions libres (cf. `Layout`). Ne plus utiliser au rendu.
@@ -143,6 +143,8 @@ export interface Profile {
   dofusdex_objectif?: string;
   /** Orientation d'affichage du Dofusdex sur l'overlay (défaut vertical). */
   dofusdex_format?: ModuleLayout;
+  /** Orientation d'affichage de l'Almanax sur l'overlay (défaut vertical). */
+  almanax_format?: ModuleLayout;
   /** Affiche le témoin de connexion sur l'overlay (défaut masqué). */
   overlay_hud?: boolean;
   /** État de chaque Dofus (toutes les entrées du référentiel). */

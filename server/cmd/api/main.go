@@ -91,13 +91,15 @@ func env(key, def string) string {
 
 // secureHeaders pose les en-têtes de sécurité HTTP sur toutes les réponses.
 // Content-Security-Policy : scripts uniquement depuis 'self' (build Vite bundlé) ;
-// styles 'unsafe-inline' pour les inline styles React ; WebSocket autorisé vers localhost.
+// styles 'unsafe-inline' pour les inline styles React ; WebSocket autorisé vers localhost ;
+// api.dofusdu.de autorisé (fetch + images du module Almanax).
 func secureHeaders(next http.Handler) http.Handler {
+	// api.dofusdu.de : API Almanax (module gadget) — JSON via connect-src, icônes via img-src.
 	const csp = "default-src 'self'; " +
 		"style-src 'self' 'unsafe-inline'; " +
-		"font-src 'self'; " +
-		"img-src 'self' data: blob:; " +
-		"connect-src 'self' ws://localhost:* ws://127.0.0.1:*; " +
+		"font-src 'self' data:; " +
+		"img-src 'self' data: blob: https://api.dofusdu.de; " +
+		"connect-src 'self' https://api.dofusdu.de ws://localhost:* ws://127.0.0.1:*; " +
 		"frame-ancestors 'none';"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

@@ -9,12 +9,15 @@ import { DofusdexModule } from './DofusdexModule/DofusdexModule';
 import { EtendardModule } from './EtendardModule/EtendardModule';
 import { AllianceModule } from './AllianceModule/AllianceModule';
 import { FicheModule } from './FicheModule/FicheModule';
+import { AlmanaxModule } from './AlmanaxModule/AlmanaxModule';
 
 export const OVERLAY_MODULES: Partial<Record<ModuleType, (profile: Profile) => ReactNode>> = {
   dofusdex: (profile) => <DofusdexModule profile={profile} />,
   etendard: (profile) => <EtendardModule profile={profile} />,
   alliance: (profile) => <AllianceModule profile={profile} />,
   fiche: (profile) => <FicheModule profile={profile} />,
+  // Contenu en données live (API dofusdude) ; le profil ne fournit que l'orientation.
+  almanax: (profile) => <AlmanaxModule profile={profile} />,
 };
 
 export const AVAILABLE_MODULES = Object.keys(OVERLAY_MODULES) as ModuleType[];

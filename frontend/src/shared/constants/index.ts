@@ -95,15 +95,27 @@ export const MODULES: Record<
     command: '!alliance',
   },
   fiche: { suit: 'pique', name: 'Fiche perso', sub: "Carte d'identité", command: '!perso' },
+  almanax: {
+    suit: 'coeur',
+    name: 'Almanax',
+    sub: 'Bonus & offrande du jour',
+    command: '!almanax',
+  },
 };
 
-export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'alliance', 'fiche'];
+export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'alliance', 'fiche', 'almanax'];
 
 /**
  * Modules pilotés par le moteur (commande, rotation) mais configurés DANS la page d'un autre
  * module — donc sans entrée de navigation propre. L'alliance se règle sur la page Étendard.
  */
 export const EMBEDDED_NAV_MODULES: ModuleType[] = ['alliance'];
+
+/**
+ * Modules « gadget » : informatifs, à données live (ex. Almanax via dofusdude), sans contenu à
+ * saisir. Regroupés dans une section de navigation distincte des modules d'identité.
+ */
+export const GADGET_MODULES: ModuleType[] = ['almanax'];
 
 export const STORAGE_KEY = 'do-verlay:profiles';
 export const BROADCAST_CHANNEL = 'do-verlay';

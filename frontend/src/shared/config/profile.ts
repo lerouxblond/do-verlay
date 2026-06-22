@@ -33,6 +33,7 @@ const defaultModules = (): Profile['modules'] => ({
   etendard: defaultModule('etendard', 'BG', true),
   alliance: defaultModule('alliance', 'BD', false),
   fiche: defaultModule('fiche', 'BD', true),
+  almanax: defaultModule('almanax', 'HG', true),
 });
 
 const emptyDofusStates = (): Record<DofusId, DofusState> =>
@@ -47,6 +48,7 @@ export const createEmptyProfile = (id = 'profil-1'): Profile => ({
   modules: defaultModules(),
   dofusdex_objectif: '',
   dofusdex_format: 'vertical',
+  almanax_format: 'vertical',
   overlay_hud: false,
   ordre: DOFUS_LIST.map((d) => d.id),
   dofus: emptyDofusStates(),

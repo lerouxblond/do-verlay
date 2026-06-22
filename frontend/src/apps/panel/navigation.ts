@@ -3,7 +3,7 @@
  * Les sections « module » sont dérivées des métadonnées partagées (MODULES) ; celles dont
  * le module n'est pas encore implémenté sont marquées « soon ».
  */
-import { EMBEDDED_NAV_MODULES, MODULE_ORDER, MODULES } from '@shared/constants';
+import { EMBEDDED_NAV_MODULES, GADGET_MODULES, MODULE_ORDER, MODULES } from '@shared/constants';
 import type { ModuleType } from '@shared/types';
 import type { Suit } from '@shared/theme/tokens';
 import { READY_MODULES } from './modules/registry';
@@ -29,18 +29,26 @@ export interface SectionGroup {
   sections: PanelSection[];
 }
 
-const moduleSections: PanelSection[] = MODULE_ORDER.filter(
-  (type) => !EMBEDDED_NAV_MODULES.includes(type),
-).map((type) => ({
+const toSection = (type: ModuleType): PanelSection => ({
   id: type,
   label: MODULES[type].name,
   sub: MODULES[type].sub,
   suit: MODULES[type].suit,
   status: READY_MODULES.includes(type) ? 'ready' : 'soon',
   path: `/panel/modules/${type}`,
-}));
+});
 
-export const SECTION_GROUPS: SectionGroup[] = [
+const navModules = MODULE_ORDER.filter((type) => !EMBEDDED_NAV_MODULES.includes(type));
+/** Modules d'identité (section « Modules »). */
+const moduleSections: PanelSection[] = navModules
+  .filter((type) => !GADGET_MODULES.includes(type))
+  .map(toSection);
+/** Modules gadget informatifs (section « Gadgets » à part). */
+const gadgetSections: PanelSection[] = navModules
+  .filter((type) => GADGET_MODULES.includes(type))
+  .map(toSection);
+
+const ALL_GROUPS: SectionGroup[] = [
   {
     label: 'Pilotage',
     sections: [
@@ -72,7 +80,11 @@ export const SECTION_GROUPS: SectionGroup[] = [
     ],
   },
   { label: 'Modules', sections: moduleSections },
+  { label: 'Gadgets', sections: gadgetSections },
 ];
+
+/** Groupes affichés — on masque un groupe vide (ex. plus aucun gadget). */
+export const SECTION_GROUPS: SectionGroup[] = ALL_GROUPS.filter((g) => g.sections.length > 0);
 
 export const ALL_SECTIONS: PanelSection[] = SECTION_GROUPS.flatMap((g) => g.sections);
 

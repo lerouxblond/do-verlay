@@ -3,8 +3,8 @@
 Audit de ce qui est réellement implémenté, au 22 juin 2026 (maj : Alliance + refonte blason, puis
 landing « chapiteau », chrome panel, mention légale Ankama, polish Dofusdex, **free-display :
 dispositions libres + configs Dofusdex sauvegardables + mode test**, puis **lecture du chat Twitch :
-les commandes `!…` déclenchent les modules, IRC anonyme côté serveur**, puis **modules Fiche perso
-et Générique** (= 5 modules), refonte UX Fiche perso + nettoyage du code mort). À tenir à jour.
+les commandes `!…` déclenchent les modules, IRC anonyme côté serveur**, puis **module Fiche perso**
+(= 4 modules), refonte UX Fiche perso, module Générique **retiré** + nettoyage du code mort). À tenir à jour.
 
 ## Pattern « module » (à reproduire pour les suivants)
 Un module = (1) **vue de config panel** dans `apps/panel/views/`, enregistrée dans
@@ -30,7 +30,6 @@ pour tout module rendu (`OVERLAY_MODULES`).
   | `/panel/modules/etendard` | Config Étendard (guilde **+** alliance) | id. |
   | `/panel/modules/alliance` | Redirige vers Étendard (config embarquée) | id. |
   | `/panel/modules/fiche` | Config Fiche perso | id. |
-  | `/panel/modules/generique` | Config Générique | id. |
   | `*` | redirige vers `/` | — |
 - **Garde d'auth = PLACEHOLDER** (`apps/panel/auth/`) : `useAuth` renvoie toujours
   `authenticated`. Seam pour la future auth Twitch — aucune vérif réelle.
@@ -119,11 +118,6 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   glyphe ♀/♂) **puis un bandeau de stats incrusté** (Serveur · Niveau · Succès, filets dorés, succès
   formaté `fr-FR`). Repli médaillon ♠ si aucune classe. Actif par défaut. Test de rendu Vitest.
   Assets de classe (19 icônes + bustes male/female) servis par `shared/assets/classes`.
-- **Module Générique (config + visuel overlay)** : page `GeneriqueView` — message libre (surtitre +
-  corps), **taille S/M/L** (pilote largeur + corps), et **icône utilitaire** optionnelle choisie dans
-  une petite grille (les 9 assets `shared/assets/util` + « Aucune »). Visuel `GeneriqueModule` :
-  `CardShell` cœur + icône + surtitre + message (Playfair, borné 3 lignes), repli estompé si vide.
-  Commande `!code`, actif par défaut. Test de rendu Vitest. **Les 5 modules sont désormais branchés.**
 - **`NumberStepper` à saisie libre** : la valeur centrale est désormais un `<input number>` éditable
   (flèches natives masquées, focus doré) en plus des boutons − / + — atteindre le niveau 200 ne
   demande plus de marteler « + ». Bénéficie à tous les réglages numériques (niveau, durée, cooldown…).
@@ -159,11 +153,14 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   `OverlayApp`). Cooldown / file / limite gérés par `useOverlayEngine`.
 
 ## Différé / pas encore fait ⏳
+- **Module générique retiré** (juin 2026) : jugé inutile — l'objectif (message libre) sera couvert
+  par des **modules custom sur mesure** créés à la demande (chacun son `ModuleType` + sa vue + son
+  visuel). Le type `generique`, `GenericMessage`/`GenericSize` et `shared/assets/util` ont été retirés.
 - **Persistance serveur** : le WebSocket ne fait que relayer (mémoire). Pas de PostgreSQL/REST/CRUD
   (migration `server/migrations/0001_init.sql` écrite mais non appliquée).
 - **Auth Twitch** : garde placeholder, pas d'OAuth réel.
-- **Collision/empilement multi-modules** : les **5 modules** sont implémentés (dofusdex, etendard,
-  alliance, fiche, generique) → le positionnement libre lève la contrainte des zones fixes, mais
+- **Collision/empilement multi-modules** : les **4 modules** sont implémentés (dofusdex, etendard,
+  alliance, fiche) → le positionnement libre lève la contrainte des zones fixes, mais
   l'empilement reste à éprouver visuellement quand deux modules sont placés au même endroit (pas de
   détection de chevauchement).
 

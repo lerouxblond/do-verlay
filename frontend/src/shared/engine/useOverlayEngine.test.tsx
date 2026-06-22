@@ -66,9 +66,9 @@ describe('useOverlayEngine', () => {
   it('épingle un module qui reste affiché', () => {
     const { result } = renderHook(() => useOverlayEngine(profile()));
     act(() => {
-      result.current.togglePin('generique');
+      result.current.togglePin('fiche');
     });
-    expect(result.current.isPinned('generique')).toBe(true);
-    expect(result.current.isVisible('generique')).toBe(true);
+    expect(result.current.isPinned('fiche')).toBe(true);
+    expect(result.current.isVisible('fiche')).toBe(true);
   });
 });

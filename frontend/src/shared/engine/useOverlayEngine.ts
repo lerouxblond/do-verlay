@@ -42,7 +42,6 @@ const emptyCooldown = (): Record<ModuleType, number> => ({
   etendard: 0,
   alliance: 0,
   fiche: 0,
-  generique: 0,
 });
 
 export interface EngineOptions {

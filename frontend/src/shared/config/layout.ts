@@ -58,7 +58,6 @@ const FALLBACK_ZONE: Record<ModuleType, AnchorZone> = {
   etendard: 'BG',
   alliance: 'BD',
   fiche: 'BD',
-  generique: 'BAS',
 };
 
 export const placementFromZone = (zone: AnchorZone): ModulePlacement => ({ ...ZONE_TO_PLACEMENT[zone] });

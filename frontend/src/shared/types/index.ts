@@ -5,7 +5,7 @@
 
 export type DofusState = 'not_started' | 'on_going' | 'complete';
 export type RecruitState = 'open' | 'on_request' | 'closed';
-export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'generique' | 'alliance';
+export type ModuleType = 'dofusdex' | 'etendard' | 'fiche' | 'alliance';
 /**
  * Zones d'ancrage héritées (5 coins fixes). **Déprécié** : conservé uniquement pour migrer
  * les anciens profils vers les dispositions libres (cf. `Layout`). Ne plus utiliser au rendu.
@@ -27,7 +27,6 @@ export type AnchorPoint =
   | 'BC'
   | 'BR';
 export type Gender = 'male' | 'female';
-export type GenericSize = 'S' | 'M' | 'L';
 /** Orientation d'affichage d'un module sur l'overlay. */
 export type ModuleLayout = 'vertical' | 'horizontal';
 
@@ -78,14 +77,6 @@ export interface Character {
   genre: Gender;
   /** clé d'asset de classe (= nom de fichier sans extension dans class-icons). */
   classe: string;
-}
-
-export interface GenericMessage {
-  kicker: string;
-  contenu: string;
-  taille: GenericSize;
-  /** clé d'asset utilitaire optionnelle (icône). */
-  icone?: string;
 }
 
 /** Placement libre d'un module dans une disposition (résolution-indépendant). */
@@ -161,7 +152,6 @@ export interface Profile {
   guild: Guild;
   alliance: Alliance;
   perso: Character;
-  generique: GenericMessage;
 }
 
 /** Forme du fichier d'export JSON d'un profil. */

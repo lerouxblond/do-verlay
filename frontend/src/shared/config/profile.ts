@@ -33,7 +33,6 @@ const defaultModules = (): Profile['modules'] => ({
   etendard: defaultModule('etendard', 'BG', true),
   alliance: defaultModule('alliance', 'BD', false),
   fiche: defaultModule('fiche', 'BD', true),
-  generique: defaultModule('generique', 'BAS', true),
 });
 
 const emptyDofusStates = (): Record<DofusId, DofusState> =>
@@ -66,5 +65,4 @@ export const createEmptyProfile = (id = 'profil-1'): Profile => ({
     tags: [],
   },
   perso: { nom: '', serveur: '', niveau: 1, pts_succes: 0, genre: 'male', classe: '' },
-  generique: { kicker: '', contenu: '', taille: 'M' },
 });

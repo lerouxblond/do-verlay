@@ -95,21 +95,9 @@ export const MODULES: Record<
     command: '!alliance',
   },
   fiche: { suit: 'pique', name: 'Fiche perso', sub: "Carte d'identité", command: '!perso' },
-  generique: {
-    suit: 'coeur',
-    name: 'Générique',
-    sub: 'Code créateur / engagement',
-    command: '!code',
-  },
 };
 
-export const MODULE_ORDER: ModuleType[] = [
-  'dofusdex',
-  'etendard',
-  'alliance',
-  'fiche',
-  'generique',
-];
+export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'alliance', 'fiche'];
 
 /**
  * Modules pilotés par le moteur (commande, rotation) mais configurés DANS la page d'un autre

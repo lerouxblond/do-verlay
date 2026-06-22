@@ -109,6 +109,17 @@ const wsUrl = (): string | null => {
   return `${proto}//${window.location.host}/ws`;
 };
 
+/** Déclenche le téléchargement d'un objet sérialisé en JSON (export profil / disposition). */
+function downloadJson(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export interface ConfigProviderProps {
   children: ReactNode;
   /**
@@ -288,14 +299,7 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
   }, []);
 
   const exportProfile = useCallback(() => {
-    const data = toExport(profile);
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `do-verlay-${profile.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadJson(`do-verlay-${profile.id}.json`, toExport(profile));
   }, [profile]);
 
   const importProfile = useCallback(async (file: File) => {
@@ -373,14 +377,7 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
   );
 
   const exportLayout = useCallback(() => {
-    const data = toLayoutExport(layout);
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `do-verlay-disposition-${layout.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadJson(`do-verlay-disposition-${layout.id}.json`, toLayoutExport(layout));
   }, [layout]);
 
   const importLayout = useCallback(async (file: File) => {

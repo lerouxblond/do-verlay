@@ -42,13 +42,6 @@ export interface Dofus {
   couleur?: string;
 }
 
-/** Ligne du Dofusdex d'un profil : état + position dans le tri manuel. */
-export interface DofusdexLine {
-  id_dofus: DofusId;
-  etat: DofusState;
-  ordre_affichage: number;
-}
-
 /** Blason de guilde = forme du fond + symbole + leurs couleurs. */
 export interface GuildEmblem {
   back: number;

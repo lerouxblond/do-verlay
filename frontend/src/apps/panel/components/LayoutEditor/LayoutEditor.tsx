@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useConfig } from '@shared/config/ConfigContext';
 import { MODULE_ORDER, MODULES } from '@shared/constants';
-import { anchorAxes, placementTranslate } from '@shared/config/layout';
+import { ANCHOR_POINTS, anchorAxes, placementTranslate } from '@shared/config/layout';
 import type { AnchorPoint, ModuleType } from '@shared/types';
 import { OVERLAY_MODULES } from '@overlay/modules/registry';
 import { Field, NumberStepper, SelectInput, Toggle } from '../controls/controls';
@@ -32,9 +32,6 @@ import {
   SCENE_W,
   tagStyle,
 } from './LayoutEditor.styles';
-
-/** Ordre des cellules de la grille 3×3, ligne par ligne. */
-const ANCHOR_GRID: AnchorPoint[] = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
 
 /** Modules réellement rendus à l'overlay (donc positionnables). */
 const EDITABLE_MODULES = MODULE_ORDER.filter((m) => OVERLAY_MODULES[m]);
@@ -227,7 +224,7 @@ export function LayoutEditor({ backgroundSrc, backgroundOpacity }: LayoutEditorP
         <div>
           <div style={asideTitleStyle}>Ancrage</div>
           <div style={anchorGridStyle} role="group" aria-label="Point d'ancrage">
-            {ANCHOR_GRID.map((a) => {
+            {ANCHOR_POINTS.map((a) => {
               const active = sel.anchor === a;
               return (
                 <button

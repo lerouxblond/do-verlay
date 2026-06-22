@@ -1,6 +1,6 @@
 /** Constantes partagées — source : dictionnaire de données (étape 03) + prototype 06. */
 import type { Suit } from '../theme/tokens';
-import type { AnchorZone, ModuleType } from '../types';
+import type { ModuleType } from '../types';
 
 export const SERVERS = [
   'Draconiros',
@@ -41,9 +41,7 @@ export const CLASSES = [
 export const MAX_TAGS = 5;
 export const MODULE_LIMIT = { min: 1, max: 4, default: 2 } as const;
 
-export const DOFUS_STATES = ['not_started', 'on_going', 'complete'] as const;
 export const RECRUIT_STATES = ['open', 'on_request', 'closed'] as const;
-export const ANCHOR_ZONES: AnchorZone[] = ['HG', 'HD', 'BG', 'BD', 'BAS'];
 
 /** Durées par défaut (ms) — repris du prototype 06. */
 export const TIMING = {
@@ -95,15 +93,6 @@ export const MODULE_ORDER: ModuleType[] = [
  * module — donc sans entrée de navigation propre. L'alliance se règle sur la page Étendard.
  */
 export const EMBEDDED_NAV_MODULES: ModuleType[] = ['alliance'];
-
-/** Commande chat → type de module. */
-export const COMMAND_MAP: Record<string, ModuleType> = {
-  '!dofus': 'dofusdex',
-  '!guilde': 'etendard',
-  '!alliance': 'alliance',
-  '!perso': 'fiche',
-  '!code': 'generique',
-};
 
 export const STORAGE_KEY = 'do-verlay:profiles';
 export const BROADCAST_CHANNEL = 'do-verlay';

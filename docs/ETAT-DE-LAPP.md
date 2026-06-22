@@ -1,8 +1,9 @@
 # État de l'app — Do-verlay « Chapiteau »
 
-Audit de ce qui est réellement implémenté, au 19 juin 2026 (maj : Alliance + refonte blason, puis
+Audit de ce qui est réellement implémenté, au 22 juin 2026 (maj : Alliance + refonte blason, puis
 landing « chapiteau », chrome panel, mention légale Ankama, polish Dofusdex, **free-display :
-dispositions libres + configs Dofusdex sauvegardables + mode test**). À tenir à jour.
+dispositions libres + configs Dofusdex sauvegardables + mode test**, puis **lecture du chat Twitch :
+les commandes `!…` déclenchent les modules, IRC anonyme côté serveur**). À tenir à jour.
 
 ## Pattern « module » (à reproduire pour les suivants)
 Un module = (1) **vue de config panel** dans `apps/panel/views/`, enregistrée dans
@@ -126,12 +127,18 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   Tests Vitest (5, dont déclenchement indépendant guilde/alliance).
 - **Backend Go** (`server/`) : sert `frontend/dist` + **relais WebSocket** en mémoire (rediffusion +
   mémorisation du dernier état pour réhydrater un client tardif). Sans base.
+- **Chat Twitch — lecture des commandes** (`server/internal/services/chat`) : connexion **IRC
+  anonyme** (nick `justinfan`, lecture seule, **ni app ni OAuth ni HTTPS/domaine requis**). Le
+  serveur déduit la chaîne du **profil actif** depuis l'état relayé (`hub.OnChannel`), (re)joint le
+  canal (idempotent, reconnexion à backoff, déconnexion si chaîne vide) et **pousse** les commandes
+  `!…` à l'overlay via `/ws` (`{type:'chat'}`, éphémère, hors réhydratation). Le front mappe la
+  commande → module via la commande **configurée** du profil (`shared/lib/commandToModule`, testé) et
+  déclenche le moteur par le seam d'intentions (`ConfigContext` → `subscribeIntent` câblé dans
+  `OverlayApp`). Cooldown / file / limite gérés par `useOverlayEngine`.
 
 ## Différé / pas encore fait ⏳
 - **Modules Fiche perso / Générique** : sections « Bientôt » (placeholder). À brancher sur le même
   pattern que Dofusdex / Étendard (registres panel + overlay + actif par défaut).
-- **Chat Twitch** : la commande chat est configurable mais **aucune connexion IRC** ne déclenche les
-  modules (rotation auto + épinglage seulement). Prévu : IRC anonyme côté serveur Go.
 - **Persistance serveur** : le WebSocket ne fait que relayer (mémoire). Pas de PostgreSQL/REST/CRUD
   (migration `server/migrations/0001_init.sql` écrite mais non appliquée).
 - **Auth Twitch** : garde placeholder, pas d'OAuth réel.

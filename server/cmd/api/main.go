@@ -12,6 +12,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"do-verlay/server/internal/services/chat"
 	"do-verlay/server/internal/ws"
 )
 
@@ -30,6 +32,12 @@ func main() {
 	staticDir := env("STATIC_DIR", "../frontend/dist")
 
 	hub := ws.NewHub()
+
+	// Lecteur de chat Twitch (IRC anonyme, lecture seule) : il suit la chaîne du profil actif
+	// (déduite de l'état relayé) et pousse les commandes (`!dofus`…) à l'overlay via /ws.
+	reader := chat.NewReader()
+	reader.OnCommand = func(cmd string) { hub.Push(chatMessage(cmd)) }
+	hub.OnChannel = reader.SetChannel
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", hub.ServeWS)
@@ -63,6 +71,15 @@ func spaHandler(dir string) http.Handler {
 		}
 		fs.ServeHTTP(w, r)
 	})
+}
+
+// chatMessage encode une commande de chat pour le canal /ws ; le front la mappe vers un module.
+func chatMessage(command string) []byte {
+	b, _ := json.Marshal(struct {
+		Type    string `json:"type"`
+		Command string `json:"command"`
+	}{Type: "chat", Command: command})
+	return b
 }
 
 func env(key, def string) string {

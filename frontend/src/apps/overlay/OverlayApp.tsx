@@ -82,8 +82,23 @@ const clock = (d: Date) =>
   d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 export function OverlayApp() {
-  const { profile, layout, previewAll } = useConfig();
+  const { profile, layout, previewAll, subscribeIntent } = useConfig();
   const engine = useOverlayEngine(profile, { available: AVAILABLE_MODULES });
+
+  // Les intentions d'affichage (commande chat relayée par le serveur, ou panel → overlay) pilotent
+  // le moteur. On passe par une ref : l'objet `engine` change à chaque tick (horloge interne), mais
+  // on ne veut s'abonner qu'une fois — `subscribeIntent` est stable.
+  const engineRef = useRef(engine);
+  engineRef.current = engine;
+  useEffect(
+    () =>
+      subscribeIntent((i) => {
+        const e = engineRef.current;
+        if (i.kind === 'trigger') e.trigger(i.module);
+        else if (i.kind === 'pin') e.togglePin(i.module);
+      }),
+    [subscribeIntent],
+  );
 
   // Mode test (calage OBS) : on force tous les modules rendus à l'écran, en continu.
   const visible = previewAll

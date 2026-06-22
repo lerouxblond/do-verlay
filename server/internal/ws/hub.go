@@ -53,6 +53,11 @@ type Hub struct {
 	mu        sync.Mutex
 	clients   map[*client]struct{}
 	lastState []byte // dernier message {"type":"state",...} pour réhydrater un nouveau client
+
+	// OnChannel est notifié quand la chaîne Twitch du profil actif change (déduite de l'état
+	// relayé). Câblé par main vers le lecteur de chat. lastChannel évite les notifications inutiles.
+	OnChannel   func(channel string)
+	lastChannel string
 }
 
 func NewHub() *Hub {
@@ -112,15 +117,36 @@ func (c *client) writePump() {
 	}
 }
 
-// relay rediffuse un message à tous les clients sauf l'émetteur ; mémorise le dernier état.
+// relay rediffuse un message à tous les clients sauf l'émetteur ; mémorise le dernier état et
+// déduit la chaîne Twitch du profil actif (pour piloter le lecteur de chat).
 func (h *Hub) relay(from *client, msg []byte) {
 	var head struct {
-		Type string `json:"type"`
+		Type  string `json:"type"`
+		State struct {
+			ActiveID string `json:"activeId"`
+			Profiles []struct {
+				ID     string `json:"id"`
+				Chaine string `json:"chaine_twitch"`
+			} `json:"profiles"`
+		} `json:"state"`
 	}
 	if json.Unmarshal(msg, &head) == nil && head.Type == "state" {
+		channel := ""
+		for _, p := range head.State.Profiles {
+			if p.ID == head.State.ActiveID {
+				channel = p.Chaine
+				break
+			}
+		}
 		h.mu.Lock()
 		h.lastState = msg
+		changed := channel != h.lastChannel
+		h.lastChannel = channel
+		cb := h.OnChannel
 		h.mu.Unlock()
+		if changed && cb != nil {
+			cb(channel) // hors verrou : SetChannel peut bloquer (annulation d'une goroutine)
+		}
 	}
 
 	h.mu.Lock()
@@ -129,6 +155,16 @@ func (h *Hub) relay(from *client, msg []byte) {
 		if c == from {
 			continue
 		}
+		c.trySend(msg)
+	}
+}
+
+// Push diffuse un message éphémère (ex. commande de chat) à TOUS les clients, SANS le mémoriser :
+// il ne doit pas réhydrater un client qui se connecte plus tard.
+func (h *Hub) Push(msg []byte) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for c := range h.clients {
 		c.trySend(msg)
 	}
 }

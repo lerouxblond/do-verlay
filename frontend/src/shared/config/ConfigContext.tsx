@@ -20,6 +20,7 @@ import {
   type ReactNode,
 } from 'react';
 import { BROADCAST_CHANNEL } from '../constants';
+import { commandToModule } from '../lib/commandToModule';
 import type { DofusdexPreset, Layout, ModulePlacement, ModuleType, Profile } from '../types';
 import { cloneLayout, createDefaultLayout } from './layout';
 import { cloneProfile, createEmptyProfile } from './profile';
@@ -40,7 +41,9 @@ export type DisplayIntent =
 
 type SyncMessage =
   | { type: 'state'; state: PersistedState }
-  | { type: 'intent'; intent: DisplayIntent };
+  | { type: 'intent'; intent: DisplayIntent }
+  /** Commande de chat détectée par le serveur (IRC anonyme) — éphémère, jamais ré-émise. */
+  | { type: 'chat'; command: string };
 
 export interface ConfigValue {
   profiles: Profile[];
@@ -136,6 +139,14 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     (msg: SyncMessage) => {
       if (msg.type === 'state') applyRemoteState(msg.state);
       else if (msg.type === 'intent') intentSubs.current.forEach((cb) => cb(msg.intent));
+      else if (msg.type === 'chat') {
+        // Résolution commande → module via le profil ACTIF courant (les commandes sont éditables) ;
+        // si elle correspond, on déclenche via le même seam que les intentions panel → overlay.
+        const s = stateRef.current;
+        const active = s.profiles.find((p) => p.id === s.activeId) ?? s.profiles[0];
+        const module = active && commandToModule(active, msg.command);
+        if (module) intentSubs.current.forEach((cb) => cb({ kind: 'trigger', module }));
+      }
     },
     [applyRemoteState],
   );

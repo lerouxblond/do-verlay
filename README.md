@@ -5,8 +5,9 @@ thème « chapiteau harlequin » (rouge Zobal + or Ecaflip). Le streamer configu
 panel ; l'overlay les affiche en direct par-dessus le jeu.
 
 - **Front** (`frontend/`) — Vite + React + TypeScript, **SPA unique** (HashRouter).
-- **Back** (`server/`) — Go : sert le front compilé + canal **WebSocket** de synchro live
-  (le reste — PostgreSQL, REST, chat Twitch — est différé, cf. `docs/ETAT-DE-LAPP.md`).
+- **Back** (`server/`) — Go : sert le front compilé + canal **WebSocket** de synchro live +
+  **lecture du chat Twitch** (IRC anonyme : les commandes `!…` déclenchent les modules, sans app ni
+  OAuth). Le reste — PostgreSQL, REST, login OAuth — est différé, cf. `docs/ETAT-DE-LAPP.md`.
 
 ## Prérequis
 - Node ≥ 20 (testé sur 24)
@@ -45,8 +46,10 @@ Variables serveur : `PORT` (défaut 8787), `STATIC_DIR` (défaut `../frontend/di
 4. Écran figé après une modif ? Clic droit sur la source → **Actualiser le cache**.
 
 ## Configuration (panel)
-- **Réglages généraux** : chaîne Twitch, nombre de modules simultanés, rotation automatique,
-  témoin de connexion de l'overlay (masqué par défaut, à activer pour le calage dans OBS).
+- **Réglages généraux** : chaîne Twitch (le serveur Go y lit le chat et **déclenche les modules sur
+  les commandes** `!dofus`, `!guilde`, `!alliance`… selon la commande configurée de chaque module),
+  nombre de modules simultanés, rotation automatique, témoin de connexion de l'overlay (masqué par
+  défaut, à activer pour le calage dans OBS).
 - **Profils** : créer / charger / renommer / dupliquer / supprimer / exporter-importer (JSON).
 - **Disposition** : positionnement **libre** des modules (glisser-déposer sur un aperçu 16:9 deux
   colonnes, échelle, ancrage 3×3, aimantation, capture Dofus en fond). Les dispositions sont

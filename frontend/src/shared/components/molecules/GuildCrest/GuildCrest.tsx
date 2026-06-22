@@ -55,7 +55,14 @@ const nameStyle: CSSProperties = {
   fontWeight: 700,
   fontSize: 17,
   color: '#F0E8E0',
-  lineHeight: 1.05,
+  lineHeight: 1.12,
+  // Borne le nom à 2 lignes (+ ellipsis) : un nom long ne fait plus exploser la hauteur de la
+  // carte ni « flotter » le blason. overflowWrap casse aussi un mot trop long.
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  overflowWrap: 'anywhere',
 };
 
 export interface CrestHeaderProps {
@@ -91,7 +98,7 @@ export interface GuildCrestProps {
 /** Blason de guilde composite + nom + niveau + pastille recrutement. */
 export function GuildCrest({ guild, crestSize = 64, style }: GuildCrestProps) {
   return (
-    <div style={{ display: 'flex', gap: 13, alignItems: 'center', ...style }}>
+    <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start', ...style }}>
       <EmblemCrest emblem={guild.emblem} variant="guild" size={crestSize} />
       <CrestHeader
         label="Guilde"
@@ -112,7 +119,7 @@ export interface AllianceCrestProps {
 /** Blason d'alliance composite + nom + acronyme + pastille recrutement. */
 export function AllianceCrest({ alliance, crestSize = 64, style }: AllianceCrestProps) {
   return (
-    <div style={{ display: 'flex', gap: 13, alignItems: 'center', ...style }}>
+    <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start', ...style }}>
       <EmblemCrest emblem={alliance.emblem} variant="alliance" size={crestSize} />
       <CrestHeader
         label="Alliance"

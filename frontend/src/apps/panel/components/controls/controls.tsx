@@ -2,7 +2,13 @@
  * Contrôles de formulaire du panel (atomes utilitaires, thème chapiteau).
  * Inline-styles façon design system ; focus géré par `.dv-field-input` (fonts.css).
  */
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
+import {
+  useId,
+  type ChangeEvent,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from 'react';
 import type { DofusState } from '@shared/types';
 import {
   colorInputStyle,
@@ -17,9 +23,9 @@ import {
   segmentWrapStyle,
   selectStyle,
   stepBtnStyle,
+  stepInputStyle,
   stepperStyle,
   stepSuffixStyle,
-  stepValueStyle,
   toggleKnobStyle,
   toggleLabelStyle,
   toggleRowStyle,
@@ -110,8 +116,15 @@ export function NumberStepper({
   step = 1,
   suffix,
 }: NumberStepperProps) {
-  const dec = () => onChange(Math.max(min, value - step));
-  const inc = () => onChange(Math.min(max, value + step));
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  const dec = () => onChange(clamp(value - step));
+  const inc = () => onChange(clamp(value + step));
+  // Saisie libre : on commit chaque frappe valide (bornée). Indispensable pour atteindre vite une
+  // grande valeur (ex. niveau 200) sans marteler le « + ».
+  const onType = (e: ChangeEvent<HTMLInputElement>) => {
+    const n = Number(e.target.value);
+    if (e.target.value !== '' && !Number.isNaN(n)) onChange(clamp(n));
+  };
   return (
     <div style={stepperStyle}>
       <button
@@ -124,7 +137,17 @@ export function NumberStepper({
       >
         −
       </button>
-      <span style={stepValueStyle}>{value}</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        className="dv-step-input"
+        style={stepInputStyle}
+        value={value}
+        min={min}
+        max={Number.isFinite(max) ? max : undefined}
+        onChange={onType}
+        aria-label="Valeur"
+      />
       <button
         type="button"
         className="dv-step-btn"

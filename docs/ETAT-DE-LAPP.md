@@ -110,12 +110,21 @@ l'éditeur (clé localStorage dédiée par disposition, panel-only — trop lour
   (états). Deux formats. Réutilisé comme aperçu dans le panel.
 - **Module Étendard (visuel overlay)** : `CardShell` trèfle + `GuildCrest` (blason + nom + niveau +
   pastille recrutement) + conditions (tags) si ouvert. Réutilisé comme aperçu.
-- **Module Fiche perso (config + visuel overlay)** : page `FicheView` (identité : nom, **classe** via
-  `CLASS_LABELS` + **genre** ; caractéristiques : serveur, niveau, points de succès) + réglages
-  communs (`ModuleSettingsCard`, commande `!perso`) + aperçu live. Visuel `FicheModule` : `CardShell`
-  pique + buste de classe genré (`Avatar` + `classCharacter`) + nom + icône/libellé de classe +
-  serveur · niveau · succès. Repli médaillon ♠ si aucune classe choisie. Actif par défaut. Test de
-  rendu Vitest. Assets de classe (19 icônes + bustes male/female) servis par `shared/assets/classes`.
+- **Module Fiche perso (config + visuel overlay)** : page `FicheView` — config **ludique** : le
+  **sexe** est un toggle ♀/♂ posé à côté du nom, et la **classe** se choisit dans une **grille de
+  médaillons** (`components/ClassPicker`, réutilise `Avatar` + `classCharacter`) dont les sprites
+  **suivent le sexe** ; caractéristiques (serveur, niveau, succès) + réglages communs
+  (`ModuleSettingsCard`, commande `!perso`) + aperçu live. Visuel `FicheModule` pensé **fiche de
+  personnage** : carte pique unique = en-tête identité (buste de classe genré + nom + classe ·
+  glyphe ♀/♂) **puis un bandeau de stats incrusté** (Serveur · Niveau · Succès, filets dorés, succès
+  formaté `fr-FR`). Repli médaillon ♠ si aucune classe. Actif par défaut. Test de rendu Vitest.
+  Assets de classe (19 icônes + bustes male/female) servis par `shared/assets/classes`.
+- **`NumberStepper` à saisie libre** : la valeur centrale est désormais un `<input number>` éditable
+  (flèches natives masquées, focus doré) en plus des boutons − / + — atteindre le niveau 200 ne
+  demande plus de marteler « + ». Bénéficie à tous les réglages numériques (niveau, durée, cooldown…).
+- **Affichage guilde/alliance durci** (`GuildCrest`) : blason **aligné en haut** (stable quelle que
+  soit la longueur du nom), **nom borné à 2 lignes + ellipsis** (`-webkit-line-clamp`), tags en
+  `white-space: nowrap` → plus de débordement ni de blason « flottant » quand il y a beaucoup d'infos.
 - **Polices auto-hébergées** (@fontsource, bundlées, même origine) → rendu fiable dans OBS (plus
   d'`@import` réseau).
 - **Landing (route `/`)** — hero « chapiteau » : projecteur + vignette sur fond losangé, titre or

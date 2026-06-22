@@ -232,6 +232,45 @@ textarea {
   background: rgba(212, 168, 67, 0.12);
 }
 
+/* Valeur éditable du stepper : masque les flèches natives (Webkit), liseré doré au focus. */
+.dv-step-input::-webkit-outer-spin-button,
+.dv-step-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dv-step-input {
+  transition: box-shadow 0.14s ease;
+  border-radius: 6px;
+}
+.dv-step-input:focus {
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.55);
+}
+
+/* Tuile de classe (ClassPicker) — lift + liseré doré au survol ; fond/liseré actif posés inline. */
+.dv-class-tile {
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.dv-class-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 168, 67, 0.6);
+}
+.dv-class-tile:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+}
+/* Segment sexe (GenderToggle) — éclat au survol (couleur/fond actifs pilotés inline). */
+.dv-gender-btn {
+  transition: filter 0.14s ease, background 0.14s ease;
+}
+.dv-gender-btn:hover {
+  filter: brightness(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-class-tile:hover {
+    transform: none;
+  }
+}
+
 /* Interrupteur (toggle) — halo doux au survol (le fond on/off reste inline). */
 .dv-toggle {
   transition: box-shadow 0.16s ease, filter 0.16s ease;

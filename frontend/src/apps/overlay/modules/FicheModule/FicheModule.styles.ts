@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { colors, fonts } from '@shared/theme/tokens';
 
-/** Rangée buste + bloc texte ; le padding dégage l'angle « enseigne » du cadre. */
+/** Rangée d'en-tête buste + identité ; le padding dégage l'angle « enseigne » du cadre. */
 export const headerStyle: CSSProperties = {
   display: 'flex',
   gap: 13,
@@ -24,10 +24,14 @@ export const kickerStyle: CSSProperties = {
 export const nameStyle: CSSProperties = {
   fontFamily: fonts.display,
   fontWeight: 700,
-  fontSize: 17,
+  fontSize: 18,
   color: colors.text,
-  lineHeight: 1.05,
+  lineHeight: 1.1,
   marginTop: 1,
+  // Nom sur une ligne (les pseudos sont courts) — ellipsis si exceptionnellement long.
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
 export const classLineStyle: CSSProperties = {
@@ -41,6 +45,7 @@ export const classIconStyle: CSSProperties = {
   width: 18,
   height: 18,
   objectFit: 'contain',
+  flex: 'none',
 };
 
 export const classLabelStyle: CSSProperties = {
@@ -52,28 +57,59 @@ export const classLabelStyle: CSSProperties = {
   fontWeight: 700,
 };
 
-export const metaRowStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  marginTop: 7,
-};
-
-export const metaStyle: CSSProperties = {
-  fontFamily: fonts.mono,
+/** Glyphe ♀/♂ discret, posé après la classe. */
+export const genderGlyphStyle: CSSProperties = {
   fontSize: 12,
+  lineHeight: 1,
+  fontWeight: 700,
   color: colors.textMuted,
-  fontWeight: 600,
-  whiteSpace: 'nowrap',
 };
 
-export const sepDotStyle: CSSProperties = {
-  width: 3,
-  height: 3,
-  borderRadius: '50%',
-  background: colors.textMuted,
-  opacity: 0.6,
-  flex: 'none',
+/* --- Bandeau de stats : la « fiche » proprement dite (plaque incrustée) --- */
+export const statBandStyle: CSSProperties = {
+  display: 'flex',
+  marginTop: 12,
+  borderRadius: 10,
+  background: 'rgba(13,10,14,0.55)',
+  border: '1px solid rgba(212,168,67,0.28)',
+  overflow: 'hidden',
+};
+
+export const statCellStyle: CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 3,
+  padding: '8px 6px',
+  minWidth: 0,
+};
+
+/** Filet doré séparant deux stats. */
+export const statDividerStyle: CSSProperties = {
+  width: 1,
+  alignSelf: 'stretch',
+  background: 'rgba(212,168,67,0.22)',
+};
+
+export const statLabelStyle: CSSProperties = {
+  fontFamily: fonts.label,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  fontSize: 8,
+  fontWeight: 700,
+  color: colors.accent,
+};
+
+export const statValueStyle: CSSProperties = {
+  fontFamily: fonts.mono,
+  fontSize: 13,
+  fontWeight: 600,
+  color: colors.text,
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 };
 
 /** Repli quand aucune classe n'est choisie : médaillon neutre portant l'enseigne pique. */

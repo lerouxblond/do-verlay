@@ -93,13 +93,19 @@ export const stepBtnStyle = (disabled: boolean): CSSProperties => ({
   cursor: disabled ? 'not-allowed' : 'pointer',
 });
 
-export const stepValueStyle: CSSProperties = {
+/** Valeur éditable au centre du stepper (saisie libre, + flèches natives masquées via .dv-step-input). */
+export const stepInputStyle: CSSProperties = {
   fontFamily: fonts.mono,
   fontSize: 15,
   fontWeight: 600,
   color: colors.text,
-  minWidth: 44,
+  width: 56,
   textAlign: 'center',
+  background: 'transparent',
+  border: 'none',
+  outline: 'none',
+  padding: '0 2px',
+  MozAppearance: 'textfield',
 };
 
 export const stepSuffixStyle: CSSProperties = {

@@ -25,6 +25,7 @@ for (const route of [
   '/#/panel/modules/dofusdex',
   '/#/panel/modules/etendard',
   '/#/panel/modules/fiche',
+  '/#/panel/modules/generique',
 ]) {
   await panel.goto(`${BASE}${route}`, { waitUntil: 'networkidle' });
   await panel.waitForTimeout(500);
@@ -48,6 +49,7 @@ for (const [route, name] of [
   ['/#/panel/modules/dofusdex', 'panel-dofusdex'],
   ['/#/panel/modules/etendard', 'panel-etendard'],
   ['/#/panel/modules/fiche', 'panel-fiche'],
+  ['/#/panel/modules/generique', 'panel-generique'],
 ]) {
   await panel.goto(`${BASE}${route}`, { waitUntil: 'networkidle' });
   await panel.waitForTimeout(700);

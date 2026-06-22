@@ -8,11 +8,13 @@ import type { ModuleType } from '@shared/types';
 import { DofusdexView } from '../views/DofusdexView';
 import { EtendardView } from '../views/EtendardView';
 import { FicheView } from '../views/FicheView';
+import { GeneriqueView } from '../views/GeneriqueView';
 
 export const PANEL_MODULE_VIEWS: Partial<Record<ModuleType, ComponentType>> = {
   dofusdex: DofusdexView,
   etendard: EtendardView,
   fiche: FicheView,
+  generique: GeneriqueView,
 };
 
 /** Modules dont la config est implémentée. */

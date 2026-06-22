@@ -33,7 +33,7 @@ const defaultModules = (): Profile['modules'] => ({
   etendard: defaultModule('etendard', 'BG', true),
   alliance: defaultModule('alliance', 'BD', false),
   fiche: defaultModule('fiche', 'BD', true),
-  generique: defaultModule('generique', 'BAS', false),
+  generique: defaultModule('generique', 'BAS', true),
 });
 
 const emptyDofusStates = (): Record<DofusId, DofusState> =>

@@ -64,9 +64,10 @@ Variables serveur : `PORT` (défaut 8787), `STATIC_DIR` (défaut `../frontend/di
   cours / Obtenu, réordonner au glisser-déposer). Aperçu live inclus.
 - **Modules › Étendard de guilde** : nom, niveau, blason (fond + symbole), statut de recrutement,
   conditions (étiquettes), + les réglages communs du module. Aperçu live inclus.
-- **Modules › Fiche perso** : nom, classe (buste genré), serveur, niveau, points de succès,
-  + les réglages communs du module (commande `!perso`). Aperçu live inclus.
-- Le module Générique est prévu mais pas encore implémenté.
+- **Modules › Fiche perso** : nom, sexe (toggle ♀/♂), classe (grille de bustes genrés), serveur,
+  niveau, points de succès, + les réglages communs du module (commande `!perso`). Aperçu live inclus.
+- **Modules › Générique** : message libre (surtitre + corps), taille S/M/L, icône utilitaire
+  optionnelle, + les réglages communs du module (commande `!code`). Aperçu live inclus.
 
 ## Qualité
 ```bash

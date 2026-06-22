@@ -52,13 +52,18 @@ export interface ConfigValue {
   /** Met à jour le profil actif (édition live). */
   updateProfile: (recipe: (p: Profile) => void) => void;
   switchProfile: (id: string) => void;
-  duplicateProfile: () => void;
+  /** Duplique un profil (le profil actif par défaut) ; la copie devient active. */
+  duplicateProfile: (id?: string) => void;
   /** Crée un profil vierge et le rend actif. */
   newProfile: () => void;
+  /** Renomme n'importe quel profil (pas seulement l'actif). */
+  renameProfile: (id: string, nom: string) => void;
   /** Supprime un profil (jamais le dernier). */
   deleteProfile: (id: string) => void;
-  exportProfile: () => void;
-  importProfile: (file: File) => Promise<void>;
+  /** Exporte un profil en JSON (le profil actif par défaut). */
+  exportProfile: (id?: string) => void;
+  /** Importe un profil depuis un JSON ; renvoie le profil importé (pour le retour utilisateur). */
+  importProfile: (file: File) => Promise<Profile>;
 
   // — Dispositions (placements des modules, indépendantes des profils) —
   layouts: Layout[];
@@ -271,9 +276,9 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     setState((prev) => (prev.profiles.some((p) => p.id === id) ? { ...prev, activeId: id } : prev));
   }, []);
 
-  const duplicateProfile = useCallback(() => {
+  const duplicateProfile = useCallback((id?: string) => {
     setState((prev) => {
-      const src = prev.profiles.find((p) => p.id === prev.activeId);
+      const src = prev.profiles.find((p) => p.id === (id ?? prev.activeId));
       if (!src) return prev;
       const copy = cloneProfile(src);
       copy.id = `${src.id}-${Date.now().toString(36)}`;
@@ -289,6 +294,13 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     });
   }, []);
 
+  const renameProfile = useCallback((id: string, nom: string) => {
+    setState((prev) => ({
+      ...prev,
+      profiles: prev.profiles.map((p) => (p.id === id ? { ...p, nom } : p)),
+    }));
+  }, []);
+
   const deleteProfile = useCallback((id: string) => {
     setState((prev) => {
       if (prev.profiles.length <= 1) return prev; // on garde toujours un profil
@@ -298,21 +310,27 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     });
   }, []);
 
-  const exportProfile = useCallback(() => {
-    downloadJson(`do-verlay-${profile.id}.json`, toExport(profile));
-  }, [profile]);
+  const exportProfile = useCallback(
+    (id?: string) => {
+      const target = state.profiles.find((p) => p.id === id) ?? profile;
+      downloadJson(`do-verlay-${target.id}.json`, toExport(target));
+    },
+    [state.profiles, profile],
+  );
 
-  const importProfile = useCallback(async (file: File) => {
-    const text = await file.text();
-    const imported = fromExport(JSON.parse(text));
-    if (!imported) throw new Error('Fichier de profil invalide');
-    setState((prev) => {
-      const exists = prev.profiles.some((p) => p.id === imported.id);
+  const importProfile = useCallback(
+    async (file: File): Promise<Profile> => {
+      const text = await file.text();
+      const imported = fromExport(JSON.parse(text));
+      if (!imported) throw new Error('Fichier de profil invalide');
+      const exists = state.profiles.some((p) => p.id === imported.id);
       const id = exists ? `${imported.id}-${Date.now().toString(36)}` : imported.id;
-      const profile = { ...imported, id };
-      return { ...prev, profiles: [...prev.profiles, profile], activeId: id };
-    });
-  }, []);
+      const next = { ...imported, id };
+      setState((prev) => ({ ...prev, profiles: [...prev.profiles, next], activeId: id }));
+      return next;
+    },
+    [state.profiles],
+  );
 
   const layout = useMemo(
     () => state.layouts.find((l) => l.id === state.activeLayoutId) ?? state.layouts[0],
@@ -464,6 +482,7 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       switchProfile,
       duplicateProfile,
       newProfile,
+      renameProfile,
       deleteProfile,
       exportProfile,
       importProfile,
@@ -501,6 +520,7 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       switchProfile,
       duplicateProfile,
       newProfile,
+      renameProfile,
       deleteProfile,
       exportProfile,
       importProfile,

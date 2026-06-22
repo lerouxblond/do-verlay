@@ -78,8 +78,8 @@ export function FicheView() {
       <ModuleSettingsCard module="fiche" />
 
       <PanelCard
-        title="Identité"
-        sub="Nom, sexe et classe — le visuel suit ces choix"
+        title="Personnage"
+        sub="Identité et caractéristiques affichées sur la fiche"
         suit="pique"
         collapsible
       >
@@ -119,14 +119,7 @@ export function FicheView() {
             onChange={(classe) => updateProfile((p) => void (p.perso.classe = classe))}
           />
         </Field>
-      </PanelCard>
 
-      <PanelCard
-        title="Caractéristiques"
-        sub="Serveur, niveau et points de succès"
-        suit="carreau"
-        collapsible
-      >
         <Field label="Serveur">
           <SelectInput
             value={perso.serveur}

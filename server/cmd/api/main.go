@@ -40,7 +40,7 @@ func main() {
 	// pas de ReadTimeout/WriteTimeout globaux qui couperaient les connexions /ws persistantes.
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           secureHeaders(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
@@ -70,4 +70,24 @@ func env(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// secureHeaders pose les en-têtes de sécurité HTTP sur toutes les réponses.
+// Content-Security-Policy : scripts uniquement depuis 'self' (build Vite bundlé) ;
+// styles 'unsafe-inline' pour les inline styles React ; WebSocket autorisé vers localhost.
+func secureHeaders(next http.Handler) http.Handler {
+	const csp = "default-src 'self'; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"font-src 'self'; " +
+		"img-src 'self' data: blob:; " +
+		"connect-src 'self' ws://localhost:* ws://127.0.0.1:*; " +
+		"frame-ancestors 'none';"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "no-referrer")
+		h.Set("Content-Security-Policy", csp)
+		next.ServeHTTP(w, r)
+	})
 }

@@ -146,9 +146,10 @@ export function toExport(profile: Profile): ProfileExport {
 
 /** Valide et extrait un profil d'un fichier d'export importé. */
 export function fromExport(json: unknown): Profile | null {
-  if (!json || typeof json !== 'object') return null;
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
   const obj = json as Partial<ProfileExport>;
-  if (obj.app !== 'do-verlay' || !obj.profile) return null;
+  if (obj.app !== 'do-verlay' || typeof obj.version !== 'number') return null;
+  if (!obj.profile || typeof obj.profile !== 'object' || Array.isArray(obj.profile)) return null;
   return normalizeProfile(obj.profile as Profile);
 }
 
@@ -159,8 +160,9 @@ export function toLayoutExport(layout: Layout): LayoutExport {
 
 /** Valide et extrait une disposition d'un fichier d'export importé. */
 export function fromLayoutExport(json: unknown): Layout | null {
-  if (!json || typeof json !== 'object') return null;
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
   const obj = json as Partial<LayoutExport>;
-  if (obj.app !== 'do-verlay' || obj.kind !== 'layout' || !obj.layout) return null;
+  if (obj.app !== 'do-verlay' || obj.kind !== 'layout' || typeof obj.version !== 'number') return null;
+  if (!obj.layout || typeof obj.layout !== 'object' || Array.isArray(obj.layout)) return null;
   return normalizeLayout(obj.layout as Layout);
 }

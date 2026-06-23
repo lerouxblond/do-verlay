@@ -4,6 +4,7 @@ import { DOFUS_LIST } from '../data/dofus';
 import type {
   DofusdexPreset,
   DofusState,
+  FullConfigExport,
   Layout,
   LayoutExport,
   ModuleType,
@@ -165,4 +166,52 @@ export function fromLayoutExport(json: unknown): Layout | null {
   if (obj.app !== 'do-verlay' || obj.kind !== 'layout' || typeof obj.version !== 'number') return null;
   if (!obj.layout || typeof obj.layout !== 'object' || Array.isArray(obj.layout)) return null;
   return normalizeLayout(obj.layout as Layout);
+}
+
+/** Sérialise la config complète (tous profils + toutes dispositions + presets) au format d'export. */
+export function toFullConfigExport(state: PersistedState): FullConfigExport {
+  return {
+    app: 'do-verlay',
+    kind: 'full-config',
+    version: 1,
+    profiles: state.profiles.map(cloneProfile),
+    activeId: state.activeId,
+    layouts: state.layouts.map(cloneLayout),
+    activeLayoutId: state.activeLayoutId,
+    dofusdexPresets: state.dofusdexPresets,
+  };
+}
+
+/** Valide et extrait une config complète d'un fichier d'export importé. */
+export function fromFullConfigExport(
+  json: unknown,
+): Omit<PersistedState, 'previewAll'> | null {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
+  const obj = json as Partial<FullConfigExport>;
+  if (obj.app !== 'do-verlay' || obj.kind !== 'full-config' || typeof obj.version !== 'number')
+    return null;
+  if (!Array.isArray(obj.profiles) || obj.profiles.length === 0) return null;
+  if (!Array.isArray(obj.layouts) || obj.layouts.length === 0) return null;
+
+  const profiles = obj.profiles.map((p) => normalizeProfile(p as Profile));
+  const activeId =
+    typeof obj.activeId === 'string' && profiles.some((p) => p.id === obj.activeId)
+      ? obj.activeId
+      : profiles[0].id;
+
+  const layouts = obj.layouts.map((l) => normalizeLayout(l as Layout));
+  const activeLayoutId =
+    typeof obj.activeLayoutId === 'string' && layouts.some((l) => l.id === obj.activeLayoutId)
+      ? obj.activeLayoutId
+      : layouts[0].id;
+
+  return {
+    profiles,
+    activeId,
+    layouts,
+    activeLayoutId,
+    dofusdexPresets: Array.isArray(obj.dofusdexPresets)
+      ? (obj.dofusdexPresets as DofusdexPreset[])
+      : [],
+  };
 }

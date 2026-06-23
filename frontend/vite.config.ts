@@ -1,6 +1,5 @@
-/// <reference types="vitest" />
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 // SPA React : une seule entrée (index.html → src/main.tsx). Le routage (launcher,

@@ -91,9 +91,12 @@ export function ProfilesView() {
     deleteProfile,
     exportProfile,
     importProfile,
+    exportFullConfig,
+    importFullConfig,
   } = useConfig();
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const fullFileRef = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -134,6 +137,21 @@ export function ProfilesView() {
     flash(true, `Profil « ${nom} » exporté en JSON.`);
   };
 
+  const onExportFull = () => {
+    exportFullConfig();
+    flash(true, 'Config complète exportée en JSON.');
+  };
+
+  const onImportFull = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      await importFullConfig(file);
+      flash(true, 'Config complète importée.');
+    } catch (e) {
+      flash(false, e instanceof Error ? e.message : 'Import impossible');
+    }
+  };
+
   const onDelete = (p: Profile) => {
     deleteProfile(p.id);
     setConfirmId(null);
@@ -146,6 +164,37 @@ export function ProfilesView() {
   const onlyOne = profiles.length <= 1;
 
   return (
+    <>
+    <PanelCard
+      title="Sauvegarde complète"
+      sub="Profils + dispositions + configs Dofusdex en un seul fichier"
+      suit="pique"
+    >
+      <div style={actionsStyle}>
+        <Button variant="accent" size="sm" onClick={onExportFull}>
+          Exporter tout
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => fullFileRef.current?.click()}>
+          Importer tout…
+        </Button>
+        <input
+          ref={fullFileRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(e) => {
+            void onImportFull(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
+      {notice && (
+        <div style={noticeStyle(notice.ok)} role="status">
+          {notice.text}
+        </div>
+      )}
+    </PanelCard>
+
     <PanelCard
       title="Profils"
       sub={`${profiles.length} enregistré${profiles.length > 1 ? 's' : ''} — un par perso, serveur ou type de stream`}
@@ -171,12 +220,6 @@ export function ProfilesView() {
           e.target.value = '';
         }}
       />
-
-      {notice && (
-        <div style={noticeStyle(notice.ok)} role="status">
-          {notice.text}
-        </div>
-      )}
 
       {profiles.length > 4 && (
         <div style={filterStyle}>
@@ -253,5 +296,6 @@ export function ProfilesView() {
         )}
       </div>
     </PanelCard>
+    </>
   );
 }

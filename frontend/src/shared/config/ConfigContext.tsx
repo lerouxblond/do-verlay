@@ -26,10 +26,12 @@ import { cloneLayout, createDefaultLayout } from './layout';
 import { cloneProfile, createEmptyProfile } from './profile';
 import {
   fromExport,
+  fromFullConfigExport,
   fromLayoutExport,
   loadState,
   saveState,
   toExport,
+  toFullConfigExport,
   toLayoutExport,
   type PersistedState,
 } from './store';
@@ -82,6 +84,11 @@ export interface ConfigValue {
   updatePlacement: (module: ModuleType, recipe: (p: ModulePlacement) => void) => void;
   exportLayout: () => void;
   importLayout: (file: File) => Promise<void>;
+
+  /** Exporte la config complète (tous profils + toutes dispositions + presets Dofusdex) en un seul JSON. */
+  exportFullConfig: () => void;
+  /** Importe une config complète et remplace l'état courant. */
+  importFullConfig: (file: File) => Promise<void>;
 
   // — Configs Dofusdex (instantanés de collection, indépendantes des profils) —
   dofusdexPresets: DofusdexPreset[];
@@ -410,6 +417,17 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
     });
   }, []);
 
+  const exportFullConfig = useCallback(() => {
+    downloadJson('do-verlay-config.json', toFullConfigExport(stateRef.current));
+  }, []);
+
+  const importFullConfig = useCallback(async (file: File) => {
+    const text = await file.text();
+    const imported = fromFullConfigExport(JSON.parse(text));
+    if (!imported) throw new Error('Fichier de configuration invalide');
+    setState((prev) => ({ ...imported, previewAll: prev.previewAll }));
+  }, []);
+
   const saveDofusdexPreset = useCallback((nom: string) => {
     setState((prev) => {
       const src = prev.profiles.find((p) => p.id === prev.activeId);
@@ -497,6 +515,8 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       updatePlacement,
       exportLayout,
       importLayout,
+      exportFullConfig,
+      importFullConfig,
       dofusdexPresets: state.dofusdexPresets,
       saveDofusdexPreset,
       applyDofusdexPreset,
@@ -532,6 +552,8 @@ export function ConfigProvider({ children, publish = true }: ConfigProviderProps
       updatePlacement,
       exportLayout,
       importLayout,
+      exportFullConfig,
+      importFullConfig,
       saveDofusdexPreset,
       applyDofusdexPreset,
       deleteDofusdexPreset,

@@ -170,3 +170,15 @@ export interface LayoutExport {
   version: 1;
   layout: Layout;
 }
+
+/** Forme du fichier d'export JSON de la config complète (tous profils + toutes dispositions + presets). */
+export interface FullConfigExport {
+  app: 'do-verlay';
+  kind: 'full-config';
+  version: 1;
+  profiles: Profile[];
+  activeId: string;
+  layouts: Layout[];
+  activeLayoutId: string;
+  dofusdexPresets: DofusdexPreset[];
+}

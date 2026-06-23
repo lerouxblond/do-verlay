@@ -1,6 +1,5 @@
-/* Polices du design system « Chapiteau » + reset global + keyframes partagées.
-   Importé une fois par chaque entrée (overlay / panel / launcher). */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+/* Reset global + keyframes partagées du design system « Chapiteau ».
+   Les polices sont auto-hébergées via `theme/fonts.ts` (@fontsource) — plus d'@import réseau. */
 
 * {
   box-sizing: border-box;
@@ -50,6 +49,149 @@ textarea {
   }
 }
 
+/* Entrée d'un module overlay (lever de rideau sobre) */
+@keyframes dv-module-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Sortie d'un module overlay (fondu descendant — évite la disparition brute) */
+@keyframes dv-module-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+}
+
+/* Vague de complétion d'un Dofus « en cours » : bande qui monte + ligne de niveau qui ondule.
+   Transform/opacity uniquement (composité GPU) ; classes (pas inline) pour pouvoir être coupées
+   sous prefers-reduced-motion. */
+@keyframes dv-wave-rise {
+  0% {
+    transform: translateY(150%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.65;
+  }
+  82% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(-150%);
+    opacity: 0;
+  }
+}
+@keyframes dv-wave-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+.dv-dofus-wave {
+  animation: dv-wave-rise 2.8s ease-in-out infinite;
+}
+.dv-dofus-line {
+  animation: dv-wave-bob 2.6s ease-in-out infinite;
+}
+/* « Obtenu » : halo pulsé par l'OPACITÉ du socle (composité) — pas de filter animé par frame. */
+@keyframes dv-halo-soft {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.dv-dofus-glow {
+  animation: dv-halo-soft 2.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-dofus-wave,
+  .dv-dofus-line,
+  .dv-dofus-glow {
+    animation: none;
+  }
+}
+
+/* Anneau de focus doré des champs du panel */
+.dv-field-input:focus {
+  border-color: #d4a843;
+  box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.18);
+}
+
+/* Navigation latérale du panel — états interactifs (l'inline ne fait pas :hover). */
+.dv-nav-item {
+  color: #9a8a84;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+}
+.dv-nav-item:hover {
+  background: rgba(212, 168, 67, 0.08);
+  color: #f0e8e0;
+  transform: translateX(2px);
+}
+.dv-nav-item.is-active {
+  background: rgba(201, 54, 58, 0.16);
+  color: #f0e8e0;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.4);
+}
+/* Enseigne de la section active : halo doré pulsé (réutilise dv-halo). */
+.dv-nav-item.is-active .dv-nav-suit {
+  animation: dv-halo 2.8s ease-in-out infinite;
+}
+
+/* Marque cliquable (retour accueil) + liens du bandeau : survol doux. */
+.dv-brand {
+  transition: filter 0.16s ease;
+}
+.dv-brand:hover {
+  filter: brightness(1.12);
+}
+.dv-topbar-link {
+  transition: filter 0.16s ease, transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+.dv-topbar-link:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+/* Focus clavier visible et cohérent (doré) sur la chrome interactive. */
+.dv-nav-item:focus-visible,
+.dv-topbar-link:focus-visible,
+.dv-brand:focus-visible,
+.dv-grip:focus-visible,
+.dv-launch__cta:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Accessibilité : coupe halo et déplacements de survol si l'utilisateur refuse l'animation. */
+@media (prefers-reduced-motion: reduce) {
+  .dv-nav-item.is-active .dv-nav-suit {
+    animation: none;
+  }
+  .dv-nav-item:hover,
+  .dv-topbar-link:hover {
+    transform: none;
+  }
+}
+
 /* Scrollbar discrète dorée (panel) */
 .dv-scroll::-webkit-scrollbar {
   width: 9px;
@@ -60,4 +202,174 @@ textarea {
 }
 .dv-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ============================================================================
+   États interactifs partagés (l'inline ne fait ni :hover ni :focus-visible).
+   On reste sur des effets non conflictuels avec les `background` inline des
+   composants (filter / transform / box-shadow / outline) sauf mention contraire.
+   ============================================================================ */
+
+/* Boutons du design system (atoms/Button) — lift + éclat au survol, enfoncement au clic. */
+.dv-btn {
+  transition: filter 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+.dv-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.dv-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* Boutons du stepper numérique (− / +) — bg posé par la classe (retiré de l'inline). */
+.dv-step-btn {
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.dv-step-btn:hover:not(:disabled) {
+  background: rgba(212, 168, 67, 0.12);
+}
+
+/* Valeur éditable du stepper : masque les flèches natives (Webkit), liseré doré au focus. */
+.dv-step-input::-webkit-outer-spin-button,
+.dv-step-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.dv-step-input {
+  transition: box-shadow 0.14s ease;
+  border-radius: 6px;
+}
+.dv-step-input:focus {
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.55);
+}
+
+/* Tuile de classe (ClassPicker) — lift + liseré doré au survol ; fond/liseré actif posés inline. */
+.dv-class-tile {
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.dv-class-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 168, 67, 0.6);
+}
+.dv-class-tile:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+}
+/* Segment sexe (GenderToggle) — éclat au survol (couleur/fond actifs pilotés inline). */
+.dv-gender-btn {
+  transition: filter 0.14s ease, background 0.14s ease;
+}
+.dv-gender-btn:hover {
+  filter: brightness(1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-class-tile:hover {
+    transform: none;
+  }
+}
+
+/* Interrupteur (toggle) — halo doux au survol (le fond on/off reste inline). */
+.dv-toggle {
+  transition: box-shadow 0.16s ease, filter 0.16s ease;
+}
+.dv-toggle:hover {
+  filter: brightness(1.06);
+}
+
+/* Segment d'état (À faire / En cours / Obtenu) — couleur/bg pilotés inline → survol non conflictuel. */
+.dv-segment-btn {
+  transition: filter 0.14s ease;
+}
+.dv-segment-btn:hover {
+  filter: brightness(1.25);
+}
+
+/* Sélecteur de couleur + chevron repliable. (`border` inline → survol en box-shadow.) */
+.dv-color {
+  transition: box-shadow 0.14s ease;
+}
+.dv-color:hover {
+  box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.5);
+}
+.dv-chevron {
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+  border-radius: 8px;
+}
+.dv-chevron:hover {
+  background: rgba(212, 168, 67, 0.1);
+  color: #e8c877;
+}
+
+/* Survol des champs (texte + select) — `border` est posé en inline (l'emporterait) → on
+   matérialise le survol par un liseré doré en box-shadow. Le focus doré reste géré plus haut
+   (.dv-field-input:focus). */
+.dv-field-input {
+  transition: box-shadow 0.14s ease;
+}
+.dv-field-input:hover:not(:focus) {
+  box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.35);
+}
+
+/* Focus clavier visible et cohérent (doré) sur tous les contrôles interactifs. */
+.dv-btn:focus-visible,
+.dv-step-btn:focus-visible,
+.dv-toggle:focus-visible,
+.dv-segment-btn:focus-visible,
+.dv-color:focus-visible,
+.dv-chevron:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ----------------------------------------------------------------------------
+   Entrée orchestrée d'une vue du panel : les enfants directs (en-tête + cartes)
+   se révèlent en cascade. Le conteneur est keyé par la route → rejoué à chaque
+   changement de section (transition de route douce). Même langage que dv-rise.
+   ---------------------------------------------------------------------------- */
+@keyframes dv-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dv-view-enter > * {
+  animation: dv-view-enter 0.5s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.dv-view-enter > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.dv-view-enter > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.dv-view-enter > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.dv-view-enter > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.dv-view-enter > *:nth-child(5) {
+  animation-delay: 0.26s;
+}
+.dv-view-enter > *:nth-child(n + 6) {
+  animation-delay: 0.32s;
+}
+
+/* Accessibilité : neutralise les nouveaux effets si l'utilisateur refuse l'animation. */
+@media (prefers-reduced-motion: reduce) {
+  .dv-btn:hover:not(:disabled),
+  .dv-btn:active:not(:disabled) {
+    transform: none;
+  }
+  .dv-view-enter > * {
+    animation: none;
+  }
 }

@@ -1,23 +1,127 @@
-// Command api — point d'entrée du backend « Chapiteau / Do-verlay ».
+// Command api — backend « Chapiteau / Do-verlay ».
 //
-// ⚠️  Squelette différé (périmètre « front d'abord »). La logique métier est
-// implémentée côté front (état local + localStorage + BroadcastChannel). Ce
-// serveur remplacera progressivement cette persistance locale :
+// Périmètre actuel (test d'intégration OBS) : sert le front compilé (frontend/dist) ET
+// expose un canal WebSocket /ws qui synchronise la config en direct entre le panel et
+// l'overlay — y compris quand l'overlay tourne dans le navigateur intégré d'OBS (process
+// distinct, donc hors de portée de BroadcastChannel/localStorage du navigateur du streamer).
 //
-//	TODO (phases 2-5 du dossier, étape 10) :
-//	  1. Charger la config (PORT, DATABASE_URL) depuis l'environnement.
-//	  2. Ouvrir le pool PostgreSQL et appliquer migrations/0001_init.sql.
-//	  3. Monter les handlers REST : CRUD profil / module / dofusdex / guilde / perso.
-//	  4. Canal WebSocket par profil : synchro live panel ↔ overlay
-//	     (source de vérité = base ; l'overlay applique, ne décide pas).
-//	  5. Service IRC anonyme : lecture du chat Twitch → déclenchement des commandes
-//	     (!dofus, !guilde, !perso, !code) avec cooldown.
+// Un seul port sert les deux → OBS charge http://localhost:8787/#/overlay et le /ws est
+// de même origine (ws://localhost:8787/ws), sans config réseau.
 //
-// Découpe stricte : handlers → services → repository → models. Aucun SQL en handler.
+// TODO (différé, cf. dossier étape 10) : PostgreSQL + REST CRUD + IRC Twitch.
 package main
 
-import "log"
+import (
+	"encoding/json"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"time"
+
+	"do-verlay/server/internal/services/chat"
+	"do-verlay/server/internal/ws"
+)
 
 func main() {
-	log.Println("chapiteau api — squelette (implémentation différée, cf. dossier étape 10)")
+	port := env("PORT", "8787")
+	// Par défaut on n'écoute que sur la boucle locale (OBS tourne sur la même machine) : pas
+	// d'exposition au réseau. Mettre HOST=0.0.0.0 pour un setup multi-PC, en connaissance de cause.
+	host := env("HOST", "127.0.0.1")
+	staticDir := env("STATIC_DIR", resolveStaticDir())
+
+	hub := ws.NewHub()
+
+	// Lecteur de chat Twitch (IRC anonyme, lecture seule) : il suit la chaîne du profil actif
+	// (déduite de l'état relayé) et pousse les commandes (`!dofus`…) à l'overlay via /ws.
+	reader := chat.NewReader()
+	reader.OnCommand = func(cmd string) { hub.Push(chatMessage(cmd)) }
+	hub.OnChannel = reader.SetChannel
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", hub.ServeWS)
+	mux.Handle("/", spaHandler(staticDir))
+
+	addr := net.JoinHostPort(host, port)
+	// ReadHeaderTimeout protège le handshake (slowloris) sans tuer les WebSocket (longue durée) ;
+	// pas de ReadTimeout/WriteTimeout globaux qui couperaient les connexions /ws persistantes.
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           secureHeaders(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	log.Printf("chapiteau api — http://%s  (overlay OBS : /#/overlay · ws : /ws)", addr)
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// spaHandler sert les fichiers statiques ; tout chemin inconnu retombe sur index.html
+// (l'app est une SPA — le routage est géré côté React).
+func spaHandler(dir string) http.Handler {
+	fs := http.FileServer(http.Dir(dir))
+	index := filepath.Join(dir, "index.html")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		clean := filepath.Join(dir, filepath.Clean(r.URL.Path))
+		if info, err := os.Stat(clean); (err != nil || info.IsDir()) && r.URL.Path != "/" {
+			http.ServeFile(w, r, index)
+			return
+		}
+		fs.ServeHTTP(w, r)
+	})
+}
+
+// chatMessage encode une commande de chat pour le canal /ws ; le front la mappe vers un module.
+func chatMessage(command string) []byte {
+	b, _ := json.Marshal(struct {
+		Type    string `json:"type"`
+		Command string `json:"command"`
+	}{Type: "chat", Command: command})
+	return b
+}
+
+func env(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// resolveStaticDir détermine le chemin du frontend compilé sans dépendre du répertoire courant.
+// Priorité : dossier à côté du binaire (cas release) → fallback ../frontend/dist (cas go run).
+func resolveStaticDir() string {
+	if exe, err := os.Executable(); err == nil {
+		// EvalSymlinks résout les liens temporaires créés par `go run`.
+		if real, err := filepath.EvalSymlinks(exe); err == nil {
+			candidate := filepath.Join(filepath.Dir(real), "frontend", "dist")
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+		}
+	}
+	return "../frontend/dist"
+}
+
+// secureHeaders pose les en-têtes de sécurité HTTP sur toutes les réponses.
+// Content-Security-Policy : scripts uniquement depuis 'self' (build Vite bundlé) ;
+// styles 'unsafe-inline' pour les inline styles React ; WebSocket autorisé vers localhost ;
+// api.dofusdu.de autorisé (fetch + images du module Almanax).
+func secureHeaders(next http.Handler) http.Handler {
+	// api.dofusdu.de : API Almanax (module gadget) — JSON via connect-src, icônes via img-src.
+	const csp = "default-src 'self'; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"font-src 'self' data:; " +
+		"img-src 'self' data: blob: https://api.dofusdu.de; " +
+		"connect-src 'self' https://api.dofusdu.de ws://localhost:* ws://127.0.0.1:*; " +
+		"frame-ancestors 'none';"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "no-referrer")
+		h.Set("Content-Security-Policy", csp)
+		next.ServeHTTP(w, r)
+	})
 }

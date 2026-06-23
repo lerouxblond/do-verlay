@@ -1,12 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { cloneProfile, SEED_PROFILES } from '../data/seed';
+import { createEmptyProfile } from '../config/profile';
 import { useOverlayEngine } from './useOverlayEngine';
 
 const profile = (limit = 2) => {
-  const p = cloneProfile(SEED_PROFILES[0]);
+  const p = createEmptyProfile();
   p.limite_modules = limit;
   p.rotation = false;
+  // On teste la mécanique du moteur sur tous les modules (indépendamment du défaut).
+  for (const m of Object.values(p.modules)) m.actif = true;
   return p;
 };
 
@@ -47,12 +49,26 @@ describe('useOverlayEngine', () => {
     expect(result.current.queue).toContain('fiche');
   });
 
+  it('déclenche guilde et alliance indépendamment (commandes séparées)', () => {
+    const { result } = renderHook(() => useOverlayEngine(profile(4)));
+    act(() => {
+      result.current.trigger('alliance');
+    });
+    expect(result.current.isVisible('alliance')).toBe(true);
+    expect(result.current.isVisible('etendard')).toBe(false);
+    act(() => {
+      result.current.trigger('etendard');
+    });
+    expect(result.current.isVisible('etendard')).toBe(true);
+    expect(result.current.isVisible('alliance')).toBe(true);
+  });
+
   it('épingle un module qui reste affiché', () => {
     const { result } = renderHook(() => useOverlayEngine(profile()));
     act(() => {
-      result.current.togglePin('generique');
+      result.current.togglePin('fiche');
     });
-    expect(result.current.isPinned('generique')).toBe(true);
-    expect(result.current.isVisible('generique')).toBe(true);
+    expect(result.current.isPinned('fiche')).toBe(true);
+    expect(result.current.isVisible('fiche')).toBe(true);
   });
 });

@@ -25,21 +25,13 @@ export const colors = {
   info: '#9CD2FF',
 } as const;
 
-/** Alias sémantiques dérivés (cf. design system — couleurs « soft »). */
-export const softColors = {
-  primarySoft: 'rgba(201,54,58,0.16)',
-  accentSoft: 'rgba(212,168,67,0.14)',
-  successSoft: 'rgba(76,175,80,0.18)',
-  errorSoft: 'rgba(229,57,53,0.18)',
-  alertSoft: 'rgba(232,136,28,0.16)',
-} as const;
-
+// Familles auto-hébergées (cf. theme/fonts.ts) + repli générique si jamais indisponible.
 export const fonts = {
   display: "'Cinzel Decorative', serif",
-  title: "'Playfair Display', serif",
+  title: "'Playfair Display Variable', 'Playfair Display', serif",
   label: "'Barlow Semi Condensed', sans-serif",
-  body: "'Inter', sans-serif",
-  mono: "'JetBrains Mono', monospace",
+  body: "'Inter Variable', 'Inter', system-ui, sans-serif",
+  mono: "'JetBrains Mono Variable', 'JetBrains Mono', monospace",
 } as const;
 
 export const radii = {
@@ -73,5 +65,3 @@ export const harlequin = (rgba: string, cell = 24) => ({
 export const lattice = (rgba = 'rgba(212,168,67,0.045)', gap = 30) =>
   `repeating-linear-gradient(45deg, ${rgba} 0 1px, transparent 1px ${gap}px), ` +
   `repeating-linear-gradient(-45deg, ${rgba} 0 1px, transparent 1px ${gap}px)`;
-
-export const intensity = { overlay: 1, panel: 0.35 } as const;

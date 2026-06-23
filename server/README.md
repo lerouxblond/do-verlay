@@ -6,15 +6,33 @@ Twitch, sur PostgreSQL. **Implémentation différée** — le front fonctionne e
 synchro multi-poste (phases 2-5 du dossier, étape 10).
 
 ## En place
+- **Canal WebSocket de synchro live** (`internal/ws`, `cmd/api`) : sert le front compilé
+  ET expose `/ws`. Le panel publie sa config, le serveur la rediffuse à tous les clients et
+  la mémorise pour réhydrater un client tardif (l'overlay dans OBS). Relais en mémoire, **sans
+  base** — c'est ce qui permet à l'overlay tourné dans OBS (process/localStorage isolés) de
+  recevoir la config faite dans le navigateur du streamer. Dép : `github.com/gorilla/websocket`.
+- **Lecture du chat Twitch** (`internal/services/chat`) : connexion **IRC anonyme** (nick
+  `justinfan`, lecture seule — **ni app, ni Client ID, ni OAuth, ni HTTPS/domaine**). Le hub déduit
+  la chaîne du profil actif depuis l'état relayé (`Hub.OnChannel` → `Reader.SetChannel`, idempotent,
+  reconnexion à backoff, déconnexion si chaîne vide) et **pousse** les commandes `!…` à tous les
+  clients via `/ws` (`Hub.Push`, message `{type:'chat'}` éphémère). Le mapping commande → module et
+  le déclenchement vivent côté front. Sans dépendance externe (TLS + IRC texte).
 - `migrations/0001_init.sql` — schéma complet dérivé du modèle de données (étape 03).
-- `cmd/api/main.go` — point d'entrée (stub) avec le plan d'implémentation.
-- `internal/{handlers,services,repository,models,middleware}` — rôles documentés (READMEs).
+- `internal/{handlers,repository,models,middleware}` — rôles documentés (READMEs), pour
+  la suite (REST + PostgreSQL, différés).
 
-## Démarrage (quand implémenté)
+## Démarrage (synchro OBS)
 ```bash
-docker compose up -d        # PostgreSQL + application du schéma
-cd server && go run ./cmd/api
+cd frontend && npm run build      # produit frontend/dist
+cd ../server && go run ./cmd/api  # http://localhost:8787 (sert dist + /ws)
 ```
+- Panel : `http://localhost:8787/#/panel/general`
+- **Source navigateur OBS** : `http://localhost:8787/#/overlay`
+Le `/ws` est de même origine (`ws://localhost:8787/ws`) → aucune config réseau. Variables :
+`PORT` (défaut 8787), `STATIC_DIR` (défaut `../frontend/dist`).
+
+## TODO (différé, étape 10)
+PostgreSQL + REST CRUD profil/module + OAuth Twitch (login réel). La lecture du chat est faite.
 
 ## Découpe
 `handlers → services → repository → models`. Aucun SQL hors `repository`, aucune logique métier en

@@ -17,7 +17,7 @@ export interface AvatarProps {
 export function Avatar({ src, size = 64, ring = '#E8C877', alt = '', style }: AvatarProps) {
   return (
     <div style={{ ...ringStyle(size, ring), ...style }}>
-      <img src={src} alt={alt} style={portraitStyle(size)} />
+      <img src={src} alt={alt} style={portraitStyle(size)} loading="lazy" decoding="async" />
       <div style={fadeStyle} />
     </div>
   );

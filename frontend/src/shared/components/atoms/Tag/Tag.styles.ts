@@ -10,6 +10,7 @@ export const tagStyle: CSSProperties = {
   letterSpacing: '0.5px',
   fontSize: 11,
   fontWeight: 600,
+  whiteSpace: 'nowrap',
   color: '#E8C877',
   background: 'rgba(212,168,67,0.14)',
   border: '1px solid rgba(212,168,67,0.4)',

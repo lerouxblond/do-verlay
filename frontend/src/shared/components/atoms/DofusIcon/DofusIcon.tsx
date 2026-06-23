@@ -1,7 +1,15 @@
 import type { CSSProperties } from 'react';
-import { dofusIcon } from '../../../assets';
+import { dofusIcon } from '../../../assets/dofus';
 import type { DofusState } from '../../../types';
-import { completeSocle, fillLayer, imageLayer, levelLine, rootStyle } from './DofusIcon.styles';
+import {
+  completeSocle,
+  fillLayer,
+  imageLayer,
+  levelLine,
+  rootStyle,
+  waveBand,
+  waveLayer,
+} from './DofusIcon.styles';
 
 export interface DofusIconProps {
   /** clé d'asset du Dofus (ex. 'dof-vulbis'). */
@@ -21,12 +29,15 @@ export function DofusIcon({ asset, state, size = 64, title, style }: DofusIconPr
   const url = dofusIcon(asset);
   return (
     <div style={{ ...rootStyle(size), ...style }} title={title} role="img" aria-label={title}>
-      {state === 'complete' && <div style={completeSocle} />}
+      {state === 'complete' && <div style={completeSocle} className="dv-dofus-glow" aria-hidden />}
       <div style={imageLayer(url, state)} />
       {state === 'on_going' && (
         <>
           <div style={fillLayer(url)} />
-          <div style={levelLine} />
+          <div style={waveLayer(url)} aria-hidden>
+            <div style={waveBand} className="dv-dofus-wave" />
+          </div>
+          <div style={levelLine} className="dv-dofus-line" />
         </>
       )}
     </div>

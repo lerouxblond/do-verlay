@@ -1,0 +1,400 @@
+/* ============================================================================
+   Launcher « Chapiteau » — porte d'entrée théâtrale.
+   Les :hover / @keyframes / pseudo-éléments ne sont pas faisables en inline →
+   on les pose ici (même parti pris que shared/theme/fonts.css). Les teintes
+   reprennent les tokens (theme/tokens.ts) : #0D0A0E bg · #C9363A rouge ·
+   #D4A843 or · #E8C877 or clair · #1A1219 surface · #F0E8E0 texte.
+   ============================================================================ */
+
+.dv-launch {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background-color: #0d0a0e;
+  /* Losanges harlequin (rappel de l'identité « chapiteau »). */
+  background-image: linear-gradient(45deg, #15101b 25%, transparent 25% 75%, #15101b 75%),
+    linear-gradient(45deg, #15101b 25%, transparent 25% 75%, #15101b 75%);
+  background-size: 84px 84px;
+  background-position: 0 0, 42px 42px;
+}
+
+/* Projecteur de scène (halo or/rouge derrière le contenu). */
+.dv-launch::before {
+  content: '';
+  position: absolute;
+  top: -14%;
+  left: 50%;
+  width: 980px;
+  height: 980px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    circle at center,
+    rgba(212, 168, 67, 0.17),
+    rgba(201, 54, 58, 0.07) 38%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+/* Vignette (concentre le regard, donne de la profondeur). */
+.dv-launch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 34%, transparent 42%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+}
+
+.dv-launch__wrap {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 48px 40px;
+  max-width: 760px;
+}
+
+/* --- Entrée orchestrée (révélation en cascade, delay posé en inline) --- */
+@keyframes dv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dv-rise {
+  opacity: 0;
+  animation: dv-rise 0.7s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+
+/* --- Titre en feuille d'or (balayage foil) --- */
+.dv-launch__title {
+  font-family: 'Cinzel Decorative', serif;
+  font-weight: 900;
+  font-size: clamp(44px, 8vw, 76px);
+  letter-spacing: 1px;
+  margin: 12px 0 4px;
+  line-height: 1;
+  background: linear-gradient(
+    100deg,
+    #b8862f 0%,
+    #e8c877 28%,
+    #fff4d6 46%,
+    #e8c877 62%,
+    #b8862f 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #5a1418) drop-shadow(0 0 24px rgba(212, 168, 67, 0.32));
+  animation: dv-foil 6.5s linear infinite;
+}
+@keyframes dv-foil {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -20% 0;
+  }
+}
+
+/* --- Cards modules (fan dynamique avec flip au survol) --- */
+.dv-module-cards {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  perspective: 1200px;
+  height: 192px;
+  margin: 18px 0 34px;
+}
+
+.dv-module-card {
+  position: relative;
+  margin: 0 -14px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.dv-module-card:nth-child(1) { transform: rotate(-20deg) translateY(18px); }
+.dv-module-card:nth-child(2) { transform: rotate(-9deg)  translateY(4px);  }
+.dv-module-card:nth-child(3) { transform: rotate(0deg)   translateY(0);    z-index: 3; }
+.dv-module-card:nth-child(4) { transform: rotate(9deg)   translateY(4px);  }
+.dv-module-card:nth-child(5) { transform: rotate(20deg)  translateY(18px); }
+.dv-module-card:hover {
+  transform: translateY(-24px) scale(1.08) !important;
+  z-index: 10;
+}
+
+/* Atténue les cartes non survolées */
+.dv-module-cards:hover .dv-module-card:not(:hover) .dv-module-card__inner {
+  filter: brightness(0.72) saturate(0.8);
+}
+
+/* Conteneur 3D — c'est lui qui flip */
+.dv-module-card__inner {
+  position: relative;
+  width: 108px;
+  height: 152px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s;
+}
+.dv-module-card:hover .dv-module-card__inner {
+  transform: rotateY(180deg);
+}
+
+/* Faces communes */
+.dv-module-card__front,
+.dv-module-card__back {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  border: 1px solid #d4a843;
+  background-color: #1a1219;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.4), 0 14px 30px rgba(0, 0, 0, 0.55);
+}
+
+/* Face avant : harlequin + glyph flottant */
+.dv-module-card__front {
+  background-image: linear-gradient(
+    45deg,
+    rgba(201, 54, 58, 0.16) 25%,
+    transparent 25% 50%,
+    rgba(201, 54, 58, 0.16) 50% 75%,
+    transparent 75%
+  );
+  background-size: 18px 18px;
+  animation: dv-bob 7s ease-in-out infinite;
+}
+.dv-module-card:nth-child(odd) .dv-module-card__front {
+  animation-duration: 8.5s;
+  animation-delay: -2s;
+}
+.dv-module-card:hover .dv-module-card__front {
+  animation-play-state: paused;
+}
+
+@keyframes dv-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.dv-module-card__rank {
+  position: absolute;
+  top: 8px;
+  left: 11px;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 0.78;
+  text-align: center;
+}
+.dv-module-card__suit {
+  font-size: 44px;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.dv-module-card__name {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 700;
+  color: #f0e8e0;
+  text-align: center;
+  padding: 0 8px;
+}
+
+/* Face arrière : description du module */
+.dv-module-card__back {
+  transform: rotateY(180deg);
+  background-color: #120e18;
+  gap: 6px;
+  padding: 14px 10px;
+  justify-content: space-around;
+}
+.dv-module-card__back-glyph {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.85;
+}
+.dv-module-card__back-name {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f0e8e0;
+  text-align: center;
+}
+.dv-module-card__back-desc {
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(240, 232, 224, 0.7);
+  text-align: center;
+}
+.dv-module-card__back-cmd {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #d4a843;
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+/* --- Cartes d'action (CTA) --- */
+.dv-launch__cta-row {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.dv-launch__cta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 256px;
+  padding: 17px 24px;
+  border-radius: 14px;
+  text-align: left;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1), box-shadow 0.25s, border-color 0.25s,
+    background 0.25s;
+}
+.dv-launch__cta:hover {
+  transform: translateY(-4px);
+}
+.dv-launch__cta--primary {
+  color: #16100e;
+  background: linear-gradient(180deg, #e8c877, #d4a843);
+  box-shadow: 0 6px 0 #7a5512, 0 12px 24px rgba(0, 0, 0, 0.45);
+}
+.dv-launch__cta--primary:hover {
+  box-shadow: 0 8px 0 #7a5512, 0 18px 34px rgba(0, 0, 0, 0.5);
+}
+.dv-launch__cta--ghost {
+  color: #f0e8e0;
+  background: rgba(240, 232, 224, 0.04);
+  border: 1.5px solid rgba(212, 168, 67, 0.5);
+}
+.dv-launch__cta--ghost:hover {
+  border-color: #d4a843;
+  background: rgba(212, 168, 67, 0.1);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
+}
+.dv-launch__cta-suit {
+  font-size: 27px;
+  line-height: 1;
+  flex: none;
+}
+.dv-launch__cta-title {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  font-size: 15px;
+}
+.dv-launch__cta-sub {
+  font-size: 12px;
+  opacity: 0.78;
+  margin-top: 2px;
+}
+
+.dv-launch__eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+}
+.dv-launch__eyebrow-suit {
+  font-size: 11px;
+  color: rgba(212, 168, 67, 0.55);
+}
+.dv-launch__eyebrow {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d4a843;
+}
+
+/* Filet ornemental sous le titre (── ◆ ──). */
+.dv-launch__rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: 300px;
+  margin: 12px auto 24px;
+  color: #d4a843;
+}
+.dv-launch__rule::before,
+.dv-launch__rule::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+}
+.dv-launch__rule::before {
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.55));
+}
+.dv-launch__rule::after {
+  background: linear-gradient(90deg, rgba(212, 168, 67, 0.55), transparent);
+}
+.dv-launch__rule-gem {
+  font-size: 12px;
+  letter-spacing: 6px;
+}
+.dv-launch__lead {
+  color: rgba(240, 232, 224, 0.72);
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 auto 30px;
+  max-width: 540px;
+}
+.dv-launch__foot {
+  margin-top: 42px;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: rgba(240, 232, 224, 0.4);
+}
+.dv-launch__legal {
+  max-width: 470px;
+  margin: 10px auto 0;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: rgba(240, 232, 224, 0.34);
+}
+
+/* Accessibilité : pas d'animation si l'utilisateur la refuse. */
+@media (prefers-reduced-motion: reduce) {
+  .dv-rise,
+  .dv-launch__title,
+  .dv-module-card__front,
+  .dv-module-card__inner {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

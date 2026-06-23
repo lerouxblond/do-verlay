@@ -1,6 +1,6 @@
 /** Constantes partagées — source : dictionnaire de données (étape 03) + prototype 06. */
 import type { Suit } from '../theme/tokens';
-import type { AnchorZone, ModuleType } from '../types';
+import type { ModuleType } from '../types';
 
 export const SERVERS = [
   'Draconiros',
@@ -38,12 +38,33 @@ export const CLASSES = [
   'zobal',
 ] as const;
 
+/** Libellés d'affichage des classes (clé d'asset → nom Dofus accentué). */
+export const CLASS_LABELS: Record<(typeof CLASSES)[number], string> = {
+  cra: 'Crâ',
+  ecaflip: 'Ecaflip',
+  eliotrope: 'Eliotrope',
+  eniripsa: 'Eniripsa',
+  enutrof: 'Enutrof',
+  feca: 'Féca',
+  forgelance: 'Forgelance',
+  huppermage: 'Huppermage',
+  iop: 'Iop',
+  osamodas: 'Osamodas',
+  ouginak: 'Ouginak',
+  pandawa: 'Pandawa',
+  roublard: 'Roublard',
+  sacrieur: 'Sacrieur',
+  sadida: 'Sadida',
+  sram: 'Sram',
+  steamer: 'Steamer',
+  xelor: 'Xélor',
+  zobal: 'Zobal',
+};
+
 export const MAX_TAGS = 5;
 export const MODULE_LIMIT = { min: 1, max: 4, default: 2 } as const;
 
-export const DOFUS_STATES = ['not_started', 'on_going', 'complete'] as const;
 export const RECRUIT_STATES = ['open', 'on_request', 'closed'] as const;
-export const ANCHOR_ZONES: AnchorZone[] = ['HG', 'HD', 'BG', 'BD', 'BAS'];
 
 /** Durées par défaut (ms) — repris du prototype 06. */
 export const TIMING = {
@@ -67,24 +88,53 @@ export const MODULES: Record<
     sub: 'Identité & recrutement',
     command: '!guilde',
   },
+  alliance: {
+    suit: 'trefle',
+    name: 'Alliance',
+    sub: 'Identité & recrutement',
+    command: '!alliance',
+  },
   fiche: { suit: 'pique', name: 'Fiche perso', sub: "Carte d'identité", command: '!perso' },
-  generique: {
+  almanax: {
     suit: 'coeur',
-    name: 'Générique',
-    sub: 'Code créateur / engagement',
-    command: '!code',
+    name: 'Almanax',
+    sub: 'Bonus & offrande du jour',
+    command: '!almanax',
   },
 };
 
-export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'fiche', 'generique'];
+export const MODULE_ORDER: ModuleType[] = ['dofusdex', 'etendard', 'alliance', 'fiche', 'almanax'];
 
-/** Commande chat → type de module. */
-export const COMMAND_MAP: Record<string, ModuleType> = {
-  '!dofus': 'dofusdex',
-  '!guilde': 'etendard',
-  '!perso': 'fiche',
-  '!code': 'generique',
-};
+/**
+ * Modules pilotés par le moteur (commande, rotation) mais configurés DANS la page d'un autre
+ * module — donc sans entrée de navigation propre. L'alliance se règle sur la page Étendard.
+ */
+export const EMBEDDED_NAV_MODULES: ModuleType[] = ['alliance'];
+
+/**
+ * Modules « gadget » : informatifs, à données live (ex. Almanax via dofusdude), sans contenu à
+ * saisir. Regroupés dans une section de navigation distincte des modules d'identité.
+ */
+export const GADGET_MODULES: ModuleType[] = ['almanax'];
 
 export const STORAGE_KEY = 'do-verlay:profiles';
 export const BROADCAST_CHANNEL = 'do-verlay';
+
+/**
+ * Préfixe de clé localStorage de l'image de référence de l'éditeur de disposition.
+ * Stockée À PART de l'état synchronisé : volumineuse, panel-only, jamais diffusée à l'overlay.
+ */
+export const EDITOR_BG_PREFIX = 'do-verlay:editor-bg:';
+
+/** Marge par défaut des placements hérités, en % de la scène 1920×1080 (= 40 px). */
+export const LAYOUT_MARGIN_PCT = { x: (40 / 1920) * 100, y: (40 / 1080) * 100 } as const;
+
+/**
+ * Mention légale — DOFUS et les illustrations associées sont la propriété d'Ankama Studio.
+ * Affichée sur la landing et dans le panel ; source unique pour rester cohérent.
+ */
+export const LEGAL_NOTICE =
+  "Site non officiel. DOFUS ainsi que certaines illustrations sont la propriété d'Ankama Studio — tous droits réservés.";
+
+/** Mention d'attribution dofusdude. */
+export const DOFUSDUDE_NOTICE = 'Données fournies par dofusdude.de';

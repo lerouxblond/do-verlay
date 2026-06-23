@@ -1,0 +1,22 @@
+name: Suggestion
+description: Proposer une amélioration ou une nouvelle fonctionnalité
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème ou besoin
+      placeholder: Qu'est-ce qui manque ou pourrait être amélioré ?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte additionnel (screenshots, etc.)

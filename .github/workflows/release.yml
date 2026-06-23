@@ -1,0 +1,64 @@
+name: Release
+
+# Se déclenche uniquement quand le CI réussit sur main (jamais sur une branche).
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # N'avance pas si le CI a échoué.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Calcule le prochain tag semver à partir du dernier tag existant et du
+      # type de commit (feat → minor, BREAKING → major, tout le reste → patch).
+      - name: Compute next version
+        id: semver
+        run: |
+          LATEST=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          if [ -z "$LATEST" ]; then LATEST="v0.0.0"; fi
+
+          MAJOR=$(echo "$LATEST" | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo "$LATEST" | cut -d. -f2)
+          PATCH=$(echo "$LATEST" | cut -d. -f3)
+
+          SUBJECT=$(git log -1 --pretty=%s)
+
+          if echo "$SUBJECT" | grep -qE '(BREAKING[ _-]CHANGE|^[a-z]+(\(.+\))?!:)'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$SUBJECT" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEXT="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "tag=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "previous=${LATEST}" >> "$GITHUB_OUTPUT"
+          echo "Next release: ${NEXT} (was ${LATEST})"
+
+      - name: Create tag and GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.semver.outputs.tag }}"
+          PREV="${{ steps.semver.outputs.previous }}"
+
+          git tag "$TAG"
+          git push origin "$TAG"
+
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --generate-notes \
+            --notes-start-tag "$PREV"

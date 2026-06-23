@@ -5,7 +5,7 @@
  * Décor, survols et animations dans Launcher.css ; identité = theme/tokens.ts.
  */
 import { Link } from 'react-router-dom';
-import { LEGAL_NOTICE } from '@shared/constants';
+import { DOFUSDUDE_NOTICE, LEGAL_NOTICE } from '@shared/constants';
 import { suits, type Suit } from '@shared/theme/tokens';
 import './Launcher.css';
 
@@ -89,6 +89,7 @@ export function Launcher() {
 
         <div className="dv-launch__foot dv-rise" style={{ animationDelay: '0.46s' }}>
           Do-verlay © 2026
+          <p className="dv-launch__legal">{DOFUSDUDE_NOTICE}</p>
           <p className="dv-launch__legal">{LEGAL_NOTICE}</p>
         </div>
       </div>

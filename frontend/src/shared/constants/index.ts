@@ -135,3 +135,6 @@ export const LAYOUT_MARGIN_PCT = { x: (40 / 1920) * 100, y: (40 / 1080) * 100 } 
  */
 export const LEGAL_NOTICE =
   "Site non officiel. DOFUS ainsi que certaines illustrations sont la propriété d'Ankama Studio — tous droits réservés.";
+
+/** Mention d'attribution dofusdude. */
+export const DOFUSDUDE_NOTICE = 'Données fournies par dofusdude.de';

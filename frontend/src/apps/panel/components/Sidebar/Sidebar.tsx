@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { SuitGlyph } from '@shared/components/atoms/SuitGlyph/SuitGlyph';
-import { LEGAL_NOTICE } from '@shared/constants';
+import { DOFUSDUDE_NOTICE, LEGAL_NOTICE } from '@shared/constants';
 import { SECTION_GROUPS } from '../../navigation';
 import {
   asideStyle,
@@ -46,6 +46,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div style={footStyle}>
+        <p style={legalStyle}>{DOFUSDUDE_NOTICE}</p>
         <p style={legalStyle}>{LEGAL_NOTICE}</p>
       </div>
     </aside>

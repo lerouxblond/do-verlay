@@ -66,6 +66,9 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
     [available, profile],
   );
 
+  // Modules épinglés en runtime via togglePin (indépendant de profile.modules[m].epingle).
+  const runtimePinned = useRef(new Set<ModuleType>());
+
   const rt = useRef<EngineRuntime>({
     shown: {},
     cooldown: emptyCooldown(),
@@ -116,7 +119,7 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
     for (const m of MODULE_ORDER) {
       const pinned = available.includes(m) && profile.modules[m].actif && !!profile.modules[m].epingle;
       if (pinned) r.shown[m] = TIMING.pinned;
-      else if (r.shown[m] === TIMING.pinned) delete r.shown[m];
+      else if (r.shown[m] === TIMING.pinned && !runtimePinned.current.has(m)) delete r.shown[m];
     }
     bump();
   }, [profile, available, bump]);
@@ -157,8 +160,13 @@ export function useOverlayEngine(profile: Profile, options: EngineOptions = {}):
   const togglePin = useCallback(
     (m: ModuleType) => {
       const r = rt.current;
-      if (r.shown[m] === TIMING.pinned) delete r.shown[m];
-      else r.shown[m] = TIMING.pinned;
+      if (runtimePinned.current.has(m)) {
+        runtimePinned.current.delete(m);
+        if (r.shown[m] === TIMING.pinned) delete r.shown[m];
+      } else {
+        runtimePinned.current.add(m);
+        r.shown[m] = TIMING.pinned;
+      }
       bump();
     },
     [bump],

@@ -29,7 +29,7 @@ func main() {
 	// Par défaut on n'écoute que sur la boucle locale (OBS tourne sur la même machine) : pas
 	// d'exposition au réseau. Mettre HOST=0.0.0.0 pour un setup multi-PC, en connaissance de cause.
 	host := env("HOST", "127.0.0.1")
-	staticDir := env("STATIC_DIR", "../frontend/dist")
+	staticDir := env("STATIC_DIR", resolveStaticDir())
 
 	hub := ws.NewHub()
 
@@ -87,6 +87,21 @@ func env(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// resolveStaticDir détermine le chemin du frontend compilé sans dépendre du répertoire courant.
+// Priorité : dossier à côté du binaire (cas release) → fallback ../frontend/dist (cas go run).
+func resolveStaticDir() string {
+	if exe, err := os.Executable(); err == nil {
+		// EvalSymlinks résout les liens temporaires créés par `go run`.
+		if real, err := filepath.EvalSymlinks(exe); err == nil {
+			candidate := filepath.Join(filepath.Dir(real), "frontend", "dist")
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+		}
+	}
+	return "../frontend/dist"
 }
 
 // secureHeaders pose les en-têtes de sécurité HTTP sur toutes les réponses.

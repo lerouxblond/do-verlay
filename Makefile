@@ -32,7 +32,7 @@ run: install
 	cd server && go run ./cmd/api
 
 start:
-	STATIC_DIR=frontend/dist ./$(BIN)
+	./$(BIN)
 
 dev:
 	cd frontend && npm run dev

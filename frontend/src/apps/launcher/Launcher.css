@@ -103,41 +103,68 @@
   }
 }
 
-/* --- Éventail de cartes (les 4 modules) --- */
-.dv-launch__fan {
+/* --- Cards modules (fan dynamique avec flip au survol) --- */
+.dv-module-cards {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  perspective: 1100px;
-  height: 176px;
+  perspective: 1200px;
+  height: 192px;
   margin: 18px 0 34px;
 }
-.dv-launch__slot {
-  transform-origin: bottom center;
-  margin: 0 -16px;
+
+.dv-module-card {
+  position: relative;
+  margin: 0 -14px;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
-.dv-launch__slot:nth-child(1) {
-  transform: rotate(-16deg) translateY(16px);
-}
-.dv-launch__slot:nth-child(2) {
-  transform: rotate(-5deg) translateY(2px);
-  z-index: 2;
-}
-.dv-launch__slot:nth-child(3) {
-  transform: rotate(5deg) translateY(2px);
-  z-index: 2;
-}
-.dv-launch__slot:nth-child(4) {
-  transform: rotate(16deg) translateY(16px);
+.dv-module-card:nth-child(1) { transform: rotate(-20deg) translateY(18px); }
+.dv-module-card:nth-child(2) { transform: rotate(-9deg)  translateY(4px);  }
+.dv-module-card:nth-child(3) { transform: rotate(0deg)   translateY(0);    z-index: 3; }
+.dv-module-card:nth-child(4) { transform: rotate(9deg)   translateY(4px);  }
+.dv-module-card:nth-child(5) { transform: rotate(20deg)  translateY(18px); }
+.dv-module-card:hover {
+  transform: translateY(-24px) scale(1.08) !important;
+  z-index: 10;
 }
 
-.dv-launch__card {
+/* Atténue les cartes non survolées */
+.dv-module-cards:hover .dv-module-card:not(:hover) .dv-module-card__inner {
+  filter: brightness(0.72) saturate(0.8);
+}
+
+/* Conteneur 3D — c'est lui qui flip */
+.dv-module-card__inner {
   position: relative;
   width: 108px;
   height: 152px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s;
+}
+.dv-module-card:hover .dv-module-card__inner {
+  transform: rotateY(180deg);
+}
+
+/* Faces communes */
+.dv-module-card__front,
+.dv-module-card__back {
+  position: absolute;
+  inset: 0;
   border-radius: 13px;
   border: 1px solid #d4a843;
   background-color: #1a1219;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.4), 0 14px 30px rgba(0, 0, 0, 0.55);
+}
+
+/* Face avant : harlequin + glyph flottant */
+.dv-module-card__front {
   background-image: linear-gradient(
     45deg,
     rgba(201, 54, 58, 0.16) 25%,
@@ -146,19 +173,16 @@
     transparent 75%
   );
   background-size: 18px 18px;
-  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.4), 0 14px 30px rgba(0, 0, 0, 0.55);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   animation: dv-bob 7s ease-in-out infinite;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1), box-shadow 0.35s, filter 0.35s;
 }
-.dv-launch__slot:nth-child(odd) .dv-launch__card {
+.dv-module-card:nth-child(odd) .dv-module-card__front {
   animation-duration: 8.5s;
   animation-delay: -2s;
 }
+.dv-module-card:hover .dv-module-card__front {
+  animation-play-state: paused;
+}
+
 @keyframes dv-bob {
   0%,
   100% {
@@ -169,35 +193,7 @@
   }
 }
 
-/* Atténue les autres cartes quand on survole l'éventail, met en avant la survolée. */
-.dv-launch__fan:hover .dv-launch__card {
-  filter: brightness(0.82) saturate(0.85);
-}
-.dv-launch__card:hover {
-  transform: translateY(-22px) scale(1.07);
-  filter: none;
-  animation-play-state: paused;
-  box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.75), 0 28px 50px rgba(0, 0, 0, 0.6),
-    0 0 28px rgba(212, 168, 67, 0.28);
-}
-.dv-launch__slot:hover {
-  z-index: 6;
-}
-
-.dv-launch__card-suit {
-  font-size: 44px;
-  line-height: 1;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-}
-.dv-launch__card-name {
-  font-family: 'Barlow Semi Condensed', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 11px;
-  font-weight: 700;
-  color: #f0e8e0;
-}
-.dv-launch__card-rank {
+.dv-module-card__rank {
   position: absolute;
   top: 8px;
   left: 11px;
@@ -206,6 +202,62 @@
   font-weight: 800;
   line-height: 0.78;
   text-align: center;
+}
+.dv-module-card__suit {
+  font-size: 44px;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.dv-module-card__name {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 700;
+  color: #f0e8e0;
+  text-align: center;
+  padding: 0 8px;
+}
+
+/* Face arrière : description du module */
+.dv-module-card__back {
+  transform: rotateY(180deg);
+  background-color: #120e18;
+  gap: 6px;
+  padding: 14px 10px;
+  justify-content: space-around;
+}
+.dv-module-card__back-glyph {
+  font-size: 22px;
+  line-height: 1;
+  opacity: 0.85;
+}
+.dv-module-card__back-name {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f0e8e0;
+  text-align: center;
+}
+.dv-module-card__back-desc {
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(240, 232, 224, 0.7);
+  text-align: center;
+}
+.dv-module-card__back-cmd {
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #d4a843;
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 6px;
+  padding: 2px 8px;
 }
 
 /* --- Cartes d'action (CTA) --- */
@@ -340,7 +392,8 @@
 @media (prefers-reduced-motion: reduce) {
   .dv-rise,
   .dv-launch__title,
-  .dv-launch__card {
+  .dv-module-card__front,
+  .dv-module-card__inner {
     animation: none !important;
     opacity: 1 !important;
   }

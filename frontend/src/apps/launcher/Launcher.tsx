@@ -1,16 +1,13 @@
 /**
  * Page de lancement (route `/`) — « le chapiteau ouvre ses portes ».
- * Hero théâtral : éventail des 4 modules (cartes à jouer), titre feuille d'or,
+ * Hero théâtral : éventail des modules (cartes flip dynamiques), titre feuille d'or,
  * festons de chapiteau, et deux cartes d'action vers le panel / l'overlay OBS.
  * Décor, survols et animations dans Launcher.css ; identité = theme/tokens.ts.
  */
 import { Link } from 'react-router-dom';
-import { DOFUSDUDE_NOTICE, LEGAL_NOTICE } from '@shared/constants';
-import { suits, type Suit } from '@shared/theme/tokens';
+import { DOFUSDUDE_NOTICE, LEGAL_NOTICE, MODULES, MODULE_ORDER } from '@shared/constants';
+import { suits } from '@shared/theme/tokens';
 import './Launcher.css';
-
-/** Ordre d'éventail ♦ ♣ ♠ ♥ (= les quatre modules). */
-const FAN: Suit[] = ['carreau', 'trefle', 'pique', 'coeur'];
 
 export function Launcher() {
   return (
@@ -38,24 +35,44 @@ export function Launcher() {
         </div>
 
         <p className="dv-launch__lead dv-rise" style={{ animationDelay: '0.2s' }}>
-          Overlay modulaire « chapiteau harlequin » — Dofusdex, étendard de guilde, fiche perso et
-          messages d'engagement — piloté en direct depuis un panel.
+          Overlay modulaire « chapiteau harlequin » — Dofusdex, Étendard, Alliance, Fiche perso,
+          Almanax — piloté en direct depuis un panel. Survole une carte pour découvrir chaque
+          module.
         </p>
 
-        <div className="dv-launch__fan dv-rise" style={{ animationDelay: '0.28s' }} aria-hidden>
-          {FAN.map((suit) => (
-            <div key={suit} className="dv-launch__slot">
-              <div className="dv-launch__card">
-                <span className="dv-launch__card-rank" style={{ color: suits[suit].color }}>
-                  {suits[suit].glyph}
-                </span>
-                <span className="dv-launch__card-suit" style={{ color: suits[suit].color }}>
-                  {suits[suit].glyph}
-                </span>
-                <span className="dv-launch__card-name">{suits[suit].module}</span>
+        <div className="dv-module-cards dv-rise" style={{ animationDelay: '0.28s' }}>
+          {MODULE_ORDER.map((type) => {
+            const mod = MODULES[type];
+            return (
+              <div key={type} className="dv-module-card">
+                <div className="dv-module-card__inner">
+                  <div className="dv-module-card__front">
+                    <span className="dv-module-card__rank" style={{ color: suits[mod.suit].color }}>
+                      {suits[mod.suit].glyph}
+                    </span>
+                    <span className="dv-module-card__suit" style={{ color: suits[mod.suit].color }}>
+                      {suits[mod.suit].glyph}
+                    </span>
+                    <span className="dv-module-card__name">{mod.name}</span>
+                  </div>
+                  <div
+                    className="dv-module-card__back"
+                    style={{ borderColor: suits[mod.suit].color }}
+                  >
+                    <span
+                      className="dv-module-card__back-glyph"
+                      style={{ color: suits[mod.suit].color }}
+                    >
+                      {suits[mod.suit].glyph}
+                    </span>
+                    <span className="dv-module-card__back-name">{mod.name}</span>
+                    <span className="dv-module-card__back-desc">{mod.sub}</span>
+                    <span className="dv-module-card__back-cmd">{mod.command}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="dv-launch__cta-row dv-rise" style={{ animationDelay: '0.36s' }}>
